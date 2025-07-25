@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -14,14 +13,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { sendStkPush } from '@/ai/flows/send-stk-push';
+import { Loader } from 'lucide-react';
 
 export default function BillingPage() {
   const { toast } = useToast();
   const [amount, setAmount] = useState('');
   const [phone, setPhone] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handlePayment = () => {
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+  const handlePayment = async () => {
+    const numericAmount = Number(amount);
+    if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
       toast({
         title: 'Invalid Amount',
         description: 'Please enter a valid amount to pay.',
@@ -32,17 +35,39 @@ export default function BillingPage() {
      if (!phone || !/^\+?[1-9]\d{1,14}$/.test(phone)) {
       toast({
         title: 'Invalid Phone Number',
-        description: 'Please enter a valid phone number.',
+        description: 'Please enter a valid phone number, e.g., +254712345678.',
         variant: 'destructive',
       });
       return;
     }
-    toast({
-      title: 'STK Push Sent',
-      description: `Payment prompt for KES ${amount} sent to ${phone}. Please enter your PIN to complete the transaction.`,
-    });
-    setAmount('');
-    setPhone('');
+
+    setLoading(true);
+    try {
+      const result = await sendStkPush({ phone, amount: numericAmount });
+      if (result.success) {
+        toast({
+          title: 'STK Push Sent',
+          description: result.message,
+        });
+        setAmount('');
+        setPhone('');
+      } else {
+        toast({
+          title: 'Payment Failed',
+          description: result.message || 'Could not initiate payment.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('STK Push Error:', error);
+      toast({
+          title: 'An Error Occurred',
+          description: 'Failed to send payment prompt. Please try again later.',
+          variant: 'destructive',
+        });
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
@@ -80,6 +105,7 @@ export default function BillingPage() {
                     placeholder="+254712345678" 
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
+                    disabled={loading}
                 />
             </div>
             <div className="space-y-2">
@@ -90,10 +116,13 @@ export default function BillingPage() {
                     placeholder="Enter amount" 
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
+                    disabled={loading}
                 />
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
-                <Button className="w-full sm:w-auto" onClick={handlePayment}>Send Payment Prompt</Button>
+                <Button className="w-full sm:w-auto" onClick={handlePayment} disabled={loading}>
+                    {loading ? <Loader className="animate-spin" /> : 'Send Payment Prompt'}
+                </Button>
                 <Button variant="outline" className="w-full sm:w-auto">
                     View Payment History
                 </Button>
