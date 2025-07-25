@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -11,13 +12,13 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const StkPushInputSchema = z.object({
+const StkPushInputSchema = z.object({
   phone: z.string().describe('The phone number to send the STK push to.'),
   amount: z.number().describe('The amount to request in KES.'),
 });
 export type StkPushInput = z.infer<typeof StkPushInputSchema>;
 
-export const StkPushOutputSchema = z.object({
+const StkPushOutputSchema = z.object({
   success: z.boolean().describe('Whether the STK push was successfully initiated.'),
   message: z.string().describe('A message describing the result of the operation.'),
 });
