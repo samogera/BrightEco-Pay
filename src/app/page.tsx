@@ -44,7 +44,7 @@ export default function Home() {
           </div>
           <div className="relative h-64 lg:h-auto lg:aspect-square rounded-2xl overflow-hidden shadow-2xl">
             <Image
-              src="https://placehold.co/800x800.png"
+              src="https://www.treehugger.com/thmb/zUpmUk500L7Wvew1ZfV_bKWkMEo=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/blue-solar-panels-1226088001-cee91a7ba920447280aed1d081b44859.jpg"
               alt="Solar panels on a modern house"
               data-ai-hint="solar panels"
               fill
