@@ -1,11 +1,11 @@
 'use client';
 
 import {useState} from 'react';
-import {Bot, Loader} from 'lucide-react';
+import {Bot, Download, Loader, FileText} from 'lucide-react';
 
 import {generateInsightsDashboard} from '@/ai/flows/generate-insights-dashboard';
 import {Button} from '@/components/ui/button';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {Card, CardContent, CardHeader, CardTitle, CardDescription} from '@/components/ui/card';
 import {Label} from '@/components/ui/label';
 import {Slider} from '@/components/ui/slider';
 import {useToast} from '@/hooks/use-toast';
@@ -15,7 +15,7 @@ export function AdminDashboard() {
   const [paymentCompliance, setPaymentCompliance] = useState(85);
   const [systemUptime, setSystemUptime] = useState(99);
   const [customerChurnRate, setCustomerChurnRate] = useState(5);
-  const [overallRevenue, setOverallRevenue] = useState(50000);
+  const [overallRevenue, setOverallRevenue] = useState(5000000);
   const [loading, setLoading] = useState(false);
   const [insights, setInsights] = useState<string | null>(null);
 
@@ -40,6 +40,19 @@ export function AdminDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+  
+  const handleDownload = () => {
+    if (!insights) return;
+    const blob = new Blob([insights.replace(/<br \/>/g, "\n")], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'insights-report.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -94,32 +107,43 @@ export function AdminDashboard() {
             <Label htmlFor="revenue" className="flex justify-between">
               <span>Overall Revenue</span>
               <span className="font-bold text-primary">
-                ${overallRevenue.toLocaleString()}
+                Ksh {overallRevenue.toLocaleString()}
               </span>
             </Label>
             <Slider
               id="revenue"
               value={[overallRevenue]}
               onValueChange={([v]) => setOverallRevenue(v)}
-              max={100000}
-              step={1000}
+              max={10000000}
+              step={10000}
             />
           </div>
           <Button onClick={handleSubmit} disabled={loading} className="w-full">
             {loading ? (
               <Loader className="animate-spin" />
             ) : (
-              'Generate Insights'
+              <>
+              <FileText className="mr-2 h-4 w-4" />
+              Generate Insights
+              </>
             )}
           </Button>
         </CardContent>
       </Card>
 
       <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle className="font-headline text-xl flex items-center gap-2">
-            <Bot className="text-primary" /> AI Generated Insights
-          </CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle className="font-headline text-xl flex items-center gap-2">
+                    <Bot className="text-primary" /> AI Generated Insights
+                </CardTitle>
+                <CardDescription>
+                    Summary of the business performance based on the KPIs.
+                </CardDescription>
+            </div>
+            <Button variant="outline" size="icon" onClick={handleDownload} disabled={!insights}>
+                <Download className="h-4 w-4" />
+            </Button>
         </CardHeader>
         <CardContent className="prose prose-sm dark:prose-invert max-w-none">
           {loading && (

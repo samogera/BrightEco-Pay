@@ -5,6 +5,7 @@ import {usePathname} from 'next/navigation';
 import {
   CreditCard,
   LayoutDashboard,
+  LogOut,
   PanelLeft,
   Settings,
   Shield,
@@ -64,10 +65,10 @@ export default function DashboardLayout({children}: PropsWithChildren) {
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname.startsWith(item.href)}
+                  isActive={pathname === item.href}
                   tooltip={{children: item.label}}
                 >
-                  <Link href="#">
+                  <Link href={item.href}>
                     <item.icon />
                     <span>{item.label}</span>
                   </Link>
@@ -95,7 +96,7 @@ export default function DashboardLayout({children}: PropsWithChildren) {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-3 w-full p-2 rounded-md outline-none text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ring-sidebar-ring focus-visible:ring-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="https://placehold.co/40x40.png" alt="User" />
+                  <AvatarImage src="https://placehold.co/40x40.png" alt="User" data-ai-hint="user avatar" />
                   <AvatarFallback>U</AvatarFallback>
                 </Avatar>
                 <span className="group-data-[collapsible=icon]:hidden font-medium">
@@ -106,15 +107,19 @@ export default function DashboardLayout({children}: PropsWithChildren) {
             <DropdownMenuContent side="right" align="start" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="mr-2" /> Profile
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/profile">
+                  <User className="mr-2" /> Profile
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Settings className="mr-2" /> Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/">Logout</Link>
+                <Link href="/">
+                  <LogOut className="mr-2" /> Logout
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

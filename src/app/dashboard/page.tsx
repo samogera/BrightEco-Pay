@@ -5,7 +5,6 @@ import {
   Zap,
 } from 'lucide-react';
 
-import {Button} from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -14,6 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {EnergyUsageChart} from '@/components/dashboard/EnergyUsageChart';
+import { BillingInfoCard } from '@/components/dashboard/BillingInfoCard';
 
 function DeviceStatusCard({
   icon: Icon,
@@ -35,33 +35,6 @@ function DeviceStatusCard({
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
         <p className="text-xs text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function BillingInfoCard() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-headline text-xl">
-          Billing & Payments
-        </CardTitle>
-        <CardDescription>
-          Manage your balance and view payment history.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <p className="text-sm text-muted-foreground">Current Balance</p>
-          <p className="text-3xl font-bold">$25.50</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Button className="w-full sm:w-auto">Make Payment</Button>
-          <Button variant="outline" className="w-full sm:w-auto">
-            View History
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
