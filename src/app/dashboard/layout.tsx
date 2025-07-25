@@ -1,0 +1,134 @@
+'use client';
+
+import Link from 'next/link';
+import {usePathname} from 'next/navigation';
+import {
+  CreditCard,
+  LayoutDashboard,
+  PanelLeft,
+  Settings,
+  Shield,
+  Smartphone,
+  User,
+} from 'lucide-react';
+import type {PropsWithChildren} from 'react';
+
+import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
+import {Button} from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
+import {Logo} from '@/components/shared/Logo';
+
+const menuItems = [
+  {href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard},
+  {href: '/dashboard/devices', label: 'Devices', icon: Smartphone},
+  {href: '/dashboard/billing', label: 'Billing', icon: CreditCard},
+  {href: '/dashboard/profile', label: 'Profile', icon: User},
+];
+
+export default function DashboardLayout({children}: PropsWithChildren) {
+  const pathname = usePathname();
+
+  return (
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <div className="group-data-[collapsible=icon]:hidden">
+            <Logo />
+          </div>
+          <div className="hidden group-data-[collapsible=icon]:block">
+            <Logo />
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarMenu>
+            {menuItems.map(item => (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith(item.href)}
+                  tooltip={{children: item.label}}
+                >
+                  <Link href="#">
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname.startsWith('/admin')}
+                tooltip={{children: 'Admin'}}
+              >
+                <Link href="/admin">
+                  <Shield />
+                  <span>Admin</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-3 w-full p-2 rounded-md outline-none text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ring-sidebar-ring focus-visible:ring-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="https://placehold.co/40x40.png" alt="User" />
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+                <span className="group-data-[collapsible=icon]:hidden font-medium">
+                  User
+                </span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="right" align="start" className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User className="mr-2" /> Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2" /> Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/">Logout</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset>
+        <header className="flex items-center justify-between p-4 border-b">
+          <SidebarTrigger>
+            <PanelLeft />
+          </SidebarTrigger>
+          <h1 className="font-headline text-xl font-semibold">Dashboard</h1>
+        </header>
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
