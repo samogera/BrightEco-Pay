@@ -1,3 +1,4 @@
+
 'use client';
 
 import {useState} from 'react';
@@ -44,7 +45,7 @@ export function AdminDashboard() {
   
   const handleDownload = () => {
     if (!insights) return;
-    const blob = new Blob([insights.replace(/<br \/>/g, "\n")], { type: 'text/plain' });
+    const blob = new Blob([insights.replace(/<br \/>/g, "\n").replace(/<\/?[^>]+(>|$)/g, "")], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -60,8 +61,11 @@ export function AdminDashboard() {
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle className="font-headline text-xl">
-            Adjust KPIs
+            Business KPI Simulation
           </CardTitle>
+           <CardDescription>
+            Adjust the sliders to simulate business metrics and generate an AI report.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">

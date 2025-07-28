@@ -3,6 +3,8 @@ import {ArrowLeft} from 'lucide-react';
 import {AdminDashboard} from '@/components/admin/AdminDashboard';
 import {Logo} from '@/components/shared/Logo';
 import {Button} from '@/components/ui/button';
+import { CustomerAnalytics } from '@/components/admin/CustomerAnalytics';
+import { Separator } from '@/components/ui/separator';
 
 export default function AdminPage() {
   return (
@@ -18,17 +20,19 @@ export default function AdminPage() {
           </Button>
         </div>
       </header>
-      <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-4xl mx-auto">
+      <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="font-headline text-3xl md:text-4xl font-bold">
               Admin & Analytics Dashboard
             </h1>
             <p className="text-muted-foreground mt-2">
-              Generate business insights using AI-powered KPI analysis.
+              Generate business insights and analyze customer data using AI.
             </p>
           </div>
           <AdminDashboard />
+          <Separator className="my-8" />
+          <CustomerAnalytics />
         </div>
       </main>
     </div>
