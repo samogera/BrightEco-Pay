@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Mail, Phone, Chrome } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {

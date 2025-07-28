@@ -8,10 +8,11 @@ import {
   LogOut,
   PanelLeft,
   Settings,
-  Shield,
   Smartphone,
   User,
   LifeBuoy,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import type {PropsWithChildren} from 'react';
 
@@ -38,6 +39,8 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import {Logo} from '@/components/shared/Logo';
+import { useTheme } from 'next-themes';
+
 
 const menuItems = [
   {href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard},
@@ -49,6 +52,7 @@ const menuItems = [
 
 export default function DashboardLayout({children}: PropsWithChildren) {
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
 
   return (
     <SidebarProvider>
@@ -118,7 +122,18 @@ export default function DashboardLayout({children}: PropsWithChildren) {
           <SidebarTrigger>
             <PanelLeft />
           </SidebarTrigger>
-          <h1 className="font-headline text-xl font-semibold">Dashboard</h1>
+          <div className="flex items-center gap-4">
+             <h1 className="font-headline text-xl font-semibold">Dashboard</h1>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              >
+                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+          </div>
         </header>
         <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-background">
           {children}
