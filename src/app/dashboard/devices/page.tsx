@@ -65,7 +65,8 @@ export default function DevicesPage() {
         setLoadingAdvice(true);
         setAdvice(null);
         try {
-            const result = await getDeviceAdvice({ devices });
+            const devicesForApi = devices.map(({ icon, ...rest }) => rest);
+            const result = await getDeviceAdvice({ devices: devicesForApi });
             setAdvice(result.advice);
         } catch (error) {
             console.error('Error getting device advice:', error);
