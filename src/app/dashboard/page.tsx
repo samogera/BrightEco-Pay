@@ -30,7 +30,7 @@ function DeviceStatusCard({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <CardTitle className="text-base font-medium">{title}</CardTitle>
         <Icon className="h-5 w-5 text-muted-foreground" />
       </CardHeader>
       <CardContent>
@@ -43,7 +43,7 @@ function DeviceStatusCard({
 
 export default function DashboardPage() {
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8">
+    <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <DeviceStatusCard
           title="Solar Panel Output"
@@ -65,7 +65,7 @@ export default function DashboardPage() {
         />
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Grace Period</CardTitle>
+            <CardTitle className="text-base font-medium">Grace Period</CardTitle>
             <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -77,7 +77,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
             <CardTitle className="font-headline text-xl">

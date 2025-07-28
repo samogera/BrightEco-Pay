@@ -11,6 +11,7 @@ import {
   Shield,
   Smartphone,
   User,
+  LifeBuoy,
 } from 'lucide-react';
 import type {PropsWithChildren} from 'react';
 
@@ -43,6 +44,7 @@ const menuItems = [
   {href: '/dashboard/devices', label: 'Devices', icon: Smartphone},
   {href: '/dashboard/billing', label: 'Billing', icon: CreditCard},
   {href: '/dashboard/profile', label: 'Profile', icon: User},
+  {href: '/dashboard/support', label: 'Support', icon: LifeBuoy},
 ];
 
 export default function DashboardLayout({children}: PropsWithChildren) {
@@ -126,13 +128,15 @@ export default function DashboardLayout({children}: PropsWithChildren) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="flex items-center justify-between p-4 border-b">
+        <header className="flex items-center justify-between p-4 border-b bg-card">
           <SidebarTrigger>
             <PanelLeft />
           </SidebarTrigger>
           <h1 className="font-headline text-xl font-semibold">Dashboard</h1>
         </header>
-        {children}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-background">
+          {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );

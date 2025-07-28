@@ -16,12 +16,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'www.treehugger.com',
-        port: '',
-        pathname: '/**',
-      },
     ],
   },
 };
