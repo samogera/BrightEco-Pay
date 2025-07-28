@@ -1,7 +1,9 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import {Toaster} from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/shared/ThemeProvider';
+import { AuthProvider } from '@/components/shared/AuthProvider';
 
 export const metadata: Metadata = {
   title: 'BrightEco Pay',
@@ -34,8 +36,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster />
+          <AuthProvider>
+            {children}
+            <Toaster />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

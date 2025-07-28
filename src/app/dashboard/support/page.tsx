@@ -10,6 +10,7 @@ import { LifeBuoy, Phone, MessageSquare, MapPin } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import Image from "next/image";
 
 
 export default function SupportPage() {
@@ -121,6 +122,15 @@ export default function SupportPage() {
                 <p className="font-semibold">Our Office</p>
                 <p className="text-sm text-muted-foreground">123 Solar Avenue, Nairobi, Kenya</p>
               </div>
+            </div>
+            <div className="relative h-48 w-full rounded-md overflow-hidden mt-4">
+                <Image 
+                    src="https://placehold.co/600x400.png"
+                    alt="Map showing office location"
+                    layout="fill"
+                    objectFit="cover"
+                    data-ai-hint="map location"
+                />
             </div>
           </CardContent>
         </Card>

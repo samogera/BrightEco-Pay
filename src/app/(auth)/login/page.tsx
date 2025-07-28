@@ -1,5 +1,10 @@
+
+'use client';
+
 import Link from 'next/link';
-import { Mail, Phone } from 'lucide-react';
+import { Mail, Phone, Loader } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +18,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
@@ -44,6 +52,73 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const { signInWithEmail, signInWithGoogle, signInWithPhone } = useAuth();
+  const [loading, setLoading] = useState(false);
+  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<any>(null);
+
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await signInWithEmail(email, password);
+      toast({ title: 'Login Successful', description: 'Welcome back!' });
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({ title: 'Login Failed', description: error.message, variant: 'destructive' });
+    }
+    setLoading(false);
+  };
+  
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+      toast({ title: 'Login Successful', description: 'Welcome!' });
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({ title: 'Login Failed', description: error.message, variant: 'destructive' });
+    }
+    setLoading(false);
+  };
+  
+  const handleSendCode = async () => {
+    setLoading(true);
+    try {
+      const result = await signInWithPhone(phone);
+      setConfirmationResult(result);
+      toast({ title: 'Code Sent', description: 'A verification code has been sent to your phone.' });
+    } catch (error: any) {
+      toast({ title: 'Failed to Send Code', description: error.message, variant: 'destructive' });
+    }
+    setLoading(false);
+  }
+
+  const handlePhoneLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirmationResult) {
+        toast({ title: 'Verification Needed', description: 'Please send a verification code first.', variant: 'destructive' });
+        return;
+    }
+    setLoading(true);
+    try {
+        await confirmationResult.confirm(code);
+        toast({ title: 'Login Successful', description: 'Welcome back!' });
+        router.push('/dashboard');
+    } catch (error: any) {
+        toast({ title: 'Login Failed', description: 'The verification code is invalid.', variant: 'destructive' });
+    }
+    setLoading(false);
+  }
+
   return (
     <Card>
       <CardHeader className="text-center">
@@ -53,39 +128,44 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        <div id="recaptcha-container"></div>
         <Tabs defaultValue="email" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="email"><Mail className="mr-2" /> Email</TabsTrigger>
             <TabsTrigger value="phone"><Phone className="mr-2" /> Phone</TabsTrigger>
           </TabsList>
           <TabsContent value="email" className="mt-6">
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleEmailLogin}>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="user@example.com" required />
+                <Input id="email" type="email" placeholder="user@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" required />
+                <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} />
               </div>
-              <Button className="w-full" asChild>
-                <Link href="/dashboard">Login with Email</Link>
+              <Button type="submit" className="w-full" disabled={loading}>
+                 {loading ? <Loader className="animate-spin" /> : 'Login with Email'}
               </Button>
             </form>
           </TabsContent>
           <TabsContent value="phone" className="mt-6">
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handlePhoneLogin}>
               <div className="space-y-2">
                 <Label htmlFor="mobile">Mobile Number</Label>
-                <Input id="mobile" type="tel" placeholder="+254 712 345 678" required />
+                <div className="flex gap-2">
+                    <Input id="mobile" type="tel" placeholder="+254 712 345 678" required value={phone} onChange={(e) => setPhone(e.target.value)} disabled={loading || !!confirmationResult} />
+                    <Button type="button" variant="outline" onClick={handleSendCode} disabled={loading || !!confirmationResult}>
+                        {loading ? <Loader className="animate-spin"/> : 'Send Code'}
+                    </Button>
+                </div>
               </div>
-              <Button variant="outline" className="w-full">Send Verification Code</Button>
                <div className="space-y-2">
                 <Label htmlFor="code">Verification Code</Label>
-                <Input id="code" type="text" placeholder="Enter 6-digit code" />
+                <Input id="code" type="text" placeholder="Enter 6-digit code" value={code} onChange={(e) => setCode(e.target.value)} disabled={loading || !confirmationResult} />
               </div>
-              <Button className="w-full" asChild>
-                <Link href="/dashboard">Login with Phone</Link>
+              <Button type="submit" className="w-full" disabled={loading || !confirmationResult}>
+                {loading ? <Loader className="animate-spin" /> : 'Login with Phone'}
               </Button>
             </form>
           </TabsContent>
@@ -100,11 +180,8 @@ export default function LoginPage() {
             </div>
         </div>
 
-        <Button variant="outline" className="w-full" asChild>
-          <Link href="/dashboard">
-            <GoogleIcon className="mr-2" />
-            Sign in with Google
-          </Link>
+        <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={loading}>
+            {loading ? <Loader className="animate-spin" /> : <><GoogleIcon className="mr-2" /> Sign in with Google</>}
         </Button>
       </CardContent>
       <CardFooter className="flex flex-col gap-4 mt-4">

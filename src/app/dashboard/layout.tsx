@@ -1,7 +1,8 @@
+
 'use client';
 
 import Link from 'next/link';
-import {usePathname} from 'next/navigation';
+import {usePathname, useRouter} from 'next/navigation';
 import {
   CreditCard,
   LayoutDashboard,
@@ -13,6 +14,7 @@ import {
   LifeBuoy,
   Moon,
   Sun,
+  Loader,
 } from 'lucide-react';
 import type {PropsWithChildren} from 'react';
 
@@ -40,6 +42,9 @@ import {
 } from '@/components/ui/sidebar';
 import {Logo} from '@/components/shared/Logo';
 import { useTheme } from 'next-themes';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import React from 'react';
 
 
 const menuItems = [
@@ -52,7 +57,34 @@ const menuItems = [
 
 export default function DashboardLayout({children}: PropsWithChildren) {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const { user, loading, signOut } = useAuth();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({ title: 'Signed Out', description: 'You have been successfully signed out.' });
+      router.push('/login');
+    } catch (error: any) {
+      toast({ title: 'Sign Out Failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login');
+    }
+  }, [user, loading, router]);
+  
+  if (loading || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>
@@ -88,11 +120,11 @@ export default function DashboardLayout({children}: PropsWithChildren) {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-3 w-full p-2 rounded-md outline-none text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ring-sidebar-ring focus-visible:ring-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="https://placehold.co/40x40.png" alt="User" data-ai-hint="user avatar" />
-                  <AvatarFallback>U</AvatarFallback>
+                  <AvatarImage src={user.photoURL || "https://placehold.co/40x40.png"} alt={user.displayName || 'User'} data-ai-hint="user avatar" />
+                  <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
-                <span className="group-data-[collapsible=icon]:hidden font-medium">
-                  User
+                <span className="group-data-[collapsible=icon]:hidden font-medium truncate">
+                  {user.displayName || user.email}
                 </span>
               </button>
             </DropdownMenuTrigger>
@@ -108,10 +140,8 @@ export default function DashboardLayout({children}: PropsWithChildren) {
                 <Settings className="mr-2" /> Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/">
-                  <LogOut className="mr-2" /> Logout
-                </Link>
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2" /> Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -123,7 +153,7 @@ export default function DashboardLayout({children}: PropsWithChildren) {
             <PanelLeft />
           </SidebarTrigger>
           <div className="flex items-center gap-4">
-             <h1 className="font-headline text-xl font-semibold">Dashboard</h1>
+             <h1 className="font-headline text-xl font-semibold capitalize">{pathname.split('/').pop() || 'Dashboard'}</h1>
               <Button
                 variant="ghost"
                 size="icon"
