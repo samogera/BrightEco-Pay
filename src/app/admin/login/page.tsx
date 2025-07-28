@@ -16,9 +16,9 @@ export default function AdminLoginPage() {
                 <form>
                     <Card>
                         <CardHeader className="text-center">
-                            <CardTitle className="font-headline text-2xl">Admin Access</CardTitle>
+                            <CardTitle className="font-headline text-2xl">Admin Login</CardTitle>
                             <CardDescription>
-                                Enter your credentials to access the admin dashboard.
+                                Access the BrightEco Pay management dashboard.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -33,12 +33,12 @@ export default function AdminLoginPage() {
                         </CardContent>
                         <CardFooter className="flex flex-col gap-4">
                             <Button className="w-full" asChild>
-                                <Link href="/admin">Login</Link>
+                                <Link href="/admin">Login to Admin Dashboard</Link>
                             </Button>
                               <p className="text-sm text-muted-foreground">
                                 Not an admin?{' '}
                                 <Link href="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
-                                    User login
+                                    Return to User Login
                                 </Link>
                             </p>
                         </CardFooter>
