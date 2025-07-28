@@ -37,46 +37,26 @@ export const useAuth = () => {
     return signInWithPopup(auth, provider);
   };
   
-  const setupRecaptcha = (phoneNumber: string) => {
-    // To enable real phone number sign-in, you must upgrade to the Blaze plan
-    // on your Firebase project to enable billing.
-    // https://firebase.google.com/pricing
-    // This function is currently mocked to allow development without billing.
-    console.warn("Firebase phone auth is mocked. Upgrade to the Blaze plan for live functionality.");
-
+  const setupRecaptcha = () => {
     if (typeof window !== 'undefined' && !(window as any).recaptchaVerifier) {
         (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
             'size': 'invisible',
             'callback': (response: any) => {
               // reCAPTCHA solved, you can now send the phone number.
               console.log("reCAPTCHA solved, ready to send phone number.");
+            },
+            'expired-callback': () => {
+                // Response expired. Ask user to solve reCAPTCHA again.
+                toast({ title: 'reCAPTCHA Expired', description: 'Please try sending the code again.', variant: 'destructive' });
             }
         });
     }
-    
-    // In a real scenario, you would use:
-    // const appVerifier = (window as any).recaptchaVerifier;
-    // return signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-
-    // For now, we return a mock confirmation result.
-    return Promise.resolve({
-      confirm: async (verificationCode: string) => {
-        if (verificationCode && verificationCode.length === 6) {
-          // Simulate a successful sign-in
-           toast({ title: 'Demo Sign-In', description: 'Phone number verified successfully (Simulated).' });
-           // In a real app, Firebase would handle the user session automatically.
-           // Here, we can't create a real user session without a real auth process.
-           // The user will be "logged in" but will appear as an anonymous or placeholder user.
-           return { user: { uid: `demo-${phoneNumber}` } };
-        } else {
-          throw new Error("Invalid verification code. Please enter a 6-digit code.");
-        }
-      },
-    });
   }
 
   const signInWithPhone = (phoneNumber: string) => {
-      return setupRecaptcha(phoneNumber);
+      setupRecaptcha();
+      const appVerifier = (window as any).recaptchaVerifier;
+      return signInWithPhoneNumber(auth, phoneNumber, appVerifier);
   };
 
   const signOut = () => {
