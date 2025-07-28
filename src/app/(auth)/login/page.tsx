@@ -114,12 +114,6 @@ export default function LoginPage() {
             Sign up
           </Link>
         </p>
-         <p className="text-sm text-muted-foreground text-center">
-          Are you an Admin?{' '}
-          <Link href="/admin/login" className="font-semibold text-primary underline-offset-4 hover:underline">
-            Login here
-          </Link>
-        </p>
       </CardFooter>
     </Card>
   );

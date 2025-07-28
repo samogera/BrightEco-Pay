@@ -15,6 +15,7 @@ import {
 import {EnergyUsageChart} from '@/components/dashboard/EnergyUsageChart';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { BillingInfoCard } from '@/components/dashboard/BillingInfoCard';
 
 function DeviceStatusCard({
   icon: Icon,
@@ -89,23 +90,9 @@ export default function DashboardPage() {
             <EnergyUsageChart />
           </CardContent>
         </Card>
-        <Card className="col-span-4 lg:col-span-3">
-            <CardHeader>
-                <CardTitle className="font-headline text-xl">Billing & Payments</CardTitle>
-                <CardDescription>
-                View your current balance and make payments.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Current Balance</p>
-                    <p className="text-3xl font-bold">KES 2,550.00</p>
-                </div>
-                <Button asChild className="w-full">
-                    <Link href="/dashboard/billing">Make a Payment</Link>
-                </Button>
-            </CardContent>
-        </Card>
+        <div className="col-span-4 lg:col-span-3">
+          <BillingInfoCard />
+        </div>
       </div>
     </div>
   );
