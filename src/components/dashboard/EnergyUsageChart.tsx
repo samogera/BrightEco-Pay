@@ -22,7 +22,7 @@ const chartData = [
 const chartConfig = {
   usage: {
     label: 'kWh',
-    color: 'hsl(var(--chart-1))',
+    color: 'hsl(var(--primary))',
   },
 } satisfies ChartConfig;
 
@@ -56,5 +56,3 @@ export function EnergyUsageChart() {
     </ChartContainer>
   );
 }
-
-    

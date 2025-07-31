@@ -72,10 +72,10 @@ function GracePeriodAlert() {
 }
 
 const usageStats = [
-    { title: 'Daily Total', value: '61.40 kWh', estimate: 'KES 750' },
-    { title: 'Weekly Total', value: '193 kWh', estimate: 'KES 2,350' },
-    { title: 'Monthly Total', value: '321 kWh', estimate: 'KES 3,900' },
-    { title: 'Yearly Total', value: '7,368 kWh', estimate: 'KES 89,500' },
+    { title: 'Daily Total', value: '6.40 kWh', estimate: 'KES 75' },
+    { title: 'Weekly Total', value: '45 kWh', estimate: 'KES 520' },
+    { title: 'Monthly Total', value: '180 kWh', estimate: 'KES 2,100' },
+    { title: 'Yearly Total', value: '2,190 kWh', estimate: 'KES 25,550' },
 ]
 
 type TimeRange = 'Day' | 'Week' | 'Month' | 'Year';
@@ -92,10 +92,13 @@ export default function DashboardPage() {
         {/* Main Usage Section */}
         <div className="lg:col-span-2">
             <Card className="h-full">
-                <CardHeader>
+                 <CardHeader>
                     <CardTitle className="font-headline text-xl">
                       Usage
                     </CardTitle>
+                    <CardDescription>
+                      Your household energy consumption.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -131,7 +134,10 @@ export default function DashboardPage() {
                     
                     <Separator />
 
-                    <EnergyUsageChart />
+                    <div className="h-[250px] w-full">
+                        <EnergyUsageChart />
+                    </div>
+
 
                     <div className="flex justify-end">
                         <Button variant="outline">Download Report</Button>
@@ -184,5 +190,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
