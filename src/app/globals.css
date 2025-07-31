@@ -90,10 +90,10 @@
   }
   
   .bg-brand-gradient {
-      @apply bg-gradient-to-b from-[#FFF2E1] to-background;
+      @apply bg-gradient-to-b from-green-50 to-background;
   }
   
   .dark .bg-brand-gradient {
-       @apply bg-gradient-to-b from-[#2c1a00] to-background;
+       @apply bg-gradient-to-b from-green-950/30 to-background;
   }
 }
