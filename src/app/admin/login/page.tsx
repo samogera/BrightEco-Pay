@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
     }
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 p-4">
             <div className="w-full max-w-sm">
                  <div className="flex justify-center mb-8">
                     <Logo />
@@ -74,7 +74,7 @@ export default function AdminLoginPage() {
                                 {loading ? <Loader className="animate-spin" /> : 'Login to Admin Dashboard'}
                             </Button>
                               <p className="text-sm text-muted-foreground">
-                                Are you a school or user?{' '}
+                                Are you a user?{' '}
                                 <Link href="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
                                     Login Here
                                 </Link>
