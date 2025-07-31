@@ -6,18 +6,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { LifeBuoy, Phone, MessageSquare, MapPin, Loader } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LifeBuoy, Phone, MessageSquare, MapPin, Loader, FileText, Send, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { submitTicket } from "@/ai/flows/submit-ticket";
+import { useAuth } from "@/hooks/use-auth";
 
 
 export default function SupportPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [subject, setSubject] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  
+  useEffect(() => {
+    if(user) {
+        setName(user.displayName || '');
+        setEmail(user.email || '');
+        setPhone(user.phoneNumber || '');
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -25,15 +36,14 @@ export default function SupportPage() {
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      name: formData.get('name') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
-      location: formData.get('location') as string,
-      subject: subject,
+      name: name,
+      email: email,
+      phone: phone,
+      title: formData.get('title') as string,
       message: formData.get('message') as string,
     }
 
-    if (!data.name || !data.email || !data.subject || !data.message) {
+    if (!data.name || !data.email || !data.title || !data.message) {
       toast({
         title: "Missing Fields",
         description: "Please fill out all required fields.",
@@ -47,12 +57,11 @@ export default function SupportPage() {
       const result = await submitTicket(data);
       if (result.success) {
          toast({
-          title: "Ticket Submitted",
-          description: result.message,
+          title: "Ticket Submitted Successfully!",
+          description: "Your request has been stored. It will be reviewed and emailed manually.",
         });
         // Reset form if needed
         (e.target as HTMLFormElement).reset();
-        setSubject('');
       } else {
          toast({
           title: "Submission Failed",
@@ -74,57 +83,49 @@ export default function SupportPage() {
   return (
     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline text-xl">Get In Touch</CardTitle>
-            <CardDescription>
-              Have an issue or a question? Fill out the form below and we'll get back to you.
-            </CardDescription>
+        <Card className="border-2 border-amber-300/50 shadow-amber-500/10">
+          <CardHeader className="flex-row gap-4 items-start">
+             <div className="p-2 bg-amber-400/20 rounded-md">
+                 <Sparkles className="h-6 w-6 text-amber-500" />
+            </div>
+            <div>
+                <CardTitle className="font-headline text-xl text-amber-900 dark:text-amber-300">Premium Support Request</CardTitle>
+                <CardDescription className="text-amber-800/80 dark:text-amber-300/80">
+                  Submit a ticket and our team will get back to you. Your user details are pre-filled.
+                </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
+                <div className="space-y-2">
+                  <Label htmlFor="subject">Subject</Label>
+                  <Input id="subject" name="subject" value="BrightEco Energy Support" readOnly className="bg-muted/70 cursor-not-allowed"/>
+                </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input id="title" name="title" placeholder="e.g., Payment Inquiry, System Offline" required />
+                </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" name="name" placeholder="Enter your name" required />
+                  <Input id="name" name="name" value={name} onChange={e => setName(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" name="email" type="email" placeholder="user@example.com" required />
-                </div>
-              </div>
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" name="phone" placeholder="+254 746 610 345" />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="location">Your Location (Optional)</Label>
-                    <Input id="location" name="location" placeholder="e.g., Nairobi" />
+                  <Input id="email" name="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="subject">Subject</Label>
-                <Select name="subject" required value={subject} onValueChange={setSubject}>
-                  <SelectTrigger id="subject">
-                    <SelectValue placeholder="Select a reason..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="appointment">Book an Appointment</SelectItem>
-                    <SelectItem value="demo">Request a Demo</SelectItem>
-                    <SelectItem value="pricing">Pricing Inquiry</SelectItem>
-                    <SelectItem value="hardware">Hardware Support</SelectItem>
-                    <SelectItem value="payment">Payment Issue</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input id="phone" name="phone" value={phone} onChange={e => setPhone(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="message">Message</Label>
                 <Textarea id="message" name="message" placeholder="Describe your issue or request in detail..." rows={5} required/>
               </div>
-              <Button type="submit" disabled={loading}>
-                {loading ? <><Loader className="animate-spin mr-2" /> Submitting...</> : 'Submit Ticket'}
+              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 w-full">
+                {loading ? <><Loader className="animate-spin mr-2" /> Submitting...</> : <><Send className="mr-2"/> Submit Ticket</>}
               </Button>
             </form>
           </CardContent>
@@ -163,23 +164,11 @@ export default function SupportPage() {
                 <p className="text-sm text-muted-foreground">123 Solar Avenue, Nairobi, Kenya</p>
               </div>
             </div>
-            <div className="relative h-48 w-full rounded-md overflow-hidden mt-4">
-                <iframe
-                    src={`https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=Nairobi`}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen={false}
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Office Location"
-                ></iframe>
-            </div>
           </CardContent>
         </Card>
          <Card>
           <CardHeader>
-            <CardTitle className="font-headline text-xl">Frequently Asked Questions</CardTitle>
+            <CardTitle className="font-headline text-xl flex items-center gap-2"><FileText className="text-primary" /> Self-Service</CardTitle>
              <CardDescription>
               Find instant answers to common questions.
             </CardDescription>
@@ -194,3 +183,5 @@ export default function SupportPage() {
     </div>
   );
 }
+
+    
