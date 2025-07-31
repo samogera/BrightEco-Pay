@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { Loader, CreditCard, Smartphone, Wallet, ChevronsRight, PlusCircle, Star, Trash2 } from 'lucide-react';
+import { CreditCard, Smartphone, Wallet, ChevronsRight, PlusCircle, Star, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {

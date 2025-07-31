@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { LifeBuoy, Phone, MessageSquare, MapPin, Loader, FileText, Send, HelpCircle } from "lucide-react";
+import { LifeBuoy, Phone, MessageSquare, MapPin, FileText, Send, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import Link from "next/link";

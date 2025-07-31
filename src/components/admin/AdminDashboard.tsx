@@ -2,7 +2,7 @@
 'use client';
 
 import {useState} from 'react';
-import {Bot, Download, Loader, FileText} from 'lucide-react';
+import {Bot, Download, FileText} from 'lucide-react';
 
 import {generateInsightsDashboard} from '@/ai/flows/generate-insights-dashboard';
 import {Button} from '@/components/ui/button';

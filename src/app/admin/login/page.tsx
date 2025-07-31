@@ -11,7 +11,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Loader } from 'lucide-react';
 import { LoadingLogo } from "@/components/shared/LoadingLogo";
 
 

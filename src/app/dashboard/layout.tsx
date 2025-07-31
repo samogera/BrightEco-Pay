@@ -14,7 +14,6 @@ import {
   LifeBuoy,
   Moon,
   Sun,
-  Loader,
   Bell,
   BookOpen,
   Check,

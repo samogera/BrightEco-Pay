@@ -5,7 +5,7 @@ import { useNotifications, Notification } from '@/hooks/use-notifications';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Bell, Loader, CreditCard, Sun, Wallet } from 'lucide-react';
+import { Check, Bell, CreditCard, Sun, Wallet } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { LoadingLogo } from '@/components/shared/LoadingLogo';

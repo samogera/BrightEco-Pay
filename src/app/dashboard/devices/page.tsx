@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Smartphone, BatteryFull, Zap, Sun, Bot, Loader } from 'lucide-react';
+import { Smartphone, BatteryFull, Zap, Sun, Bot } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';

@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Mail, Phone, Loader } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
