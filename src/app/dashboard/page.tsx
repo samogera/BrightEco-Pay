@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { DateRange } from "react-day-picker"
-import { addDays as dateFnsAddDays, format } from 'date-fns';
+import { addDays, format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subWeeks, subMonths, subYears, addWeeks, addMonths, addYears } from 'date-fns';
 
 
 import {
@@ -32,7 +32,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -85,12 +85,12 @@ function GracePeriodAlert() {
   );
 }
 
-const usageStats = [
-    { title: 'Daily Total', value: '6.40 kWh', estimate: 'KES 75' },
-    { title: 'Weekly Total', value: '45 kWh', estimate: 'KES 520' },
-    { title: 'Monthly Total', value: '180 kWh', estimate: 'KES 2,100' },
-    { title: 'Yearly Total', value: '2,190 kWh', estimate: 'KES 25,550' },
-]
+// MOCK DATA
+const hourlyData = Array.from({ length: 24 }, (_, i) => ({ time: `${i}:00`, usage: Math.floor(Math.random() * (i > 5 && i < 22 ? 150 : 30)) + 10 }));
+const weeklyData = Array.from({ length: 7 }, (_, i) => ({ day: format(subDays(new Date(), i), 'EEE'), usage: Math.floor(Math.random() * 8) + 4 }));
+const monthlyData = Array.from({ length: 4 }, (_, i) => ({ week: `Week ${i + 1}`, usage: Math.floor(Math.random() * 50) + 25 }));
+const yearlyData = Array.from({ length: 12 }, (_, i) => ({ month: format(subMonths(new Date(), i), 'MMM'), usage: Math.floor(Math.random() * 300) + 150 }));
+
 
 type TimeRange = 'Day' | 'Week' | 'Month' | 'Year';
 
@@ -101,30 +101,102 @@ export default function DashboardPage() {
     from: new Date(),
     to: new Date(),
   })
-  
+  const [chartData, setChartData] = useState<any[]>(hourlyData);
+  const [dataKey, setDataKey] = useState('time');
+
+
+  useEffect(() => {
+    switch (activeRange) {
+        case 'Day':
+            setDataKey('time');
+            setChartData(hourlyData);
+            setDate({ from: new Date(), to: new Date() });
+            break;
+        case 'Week':
+            setDataKey('day');
+            setChartData(weeklyData.reverse());
+            setDate({ from: startOfWeek(new Date()), to: endOfWeek(new Date()) });
+            break;
+        case 'Month':
+            setDataKey('week');
+            setChartData(monthlyData);
+            setDate({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
+            break;
+        case 'Year':
+            setDataKey('month');
+            setChartData(yearlyData.reverse());
+            setDate({ from: startOfYear(new Date()), to: endOfYear(new Date()) });
+            break;
+    }
+  }, [activeRange]);
+
   const displayedDate = useMemo(() => {
     if (!date?.from) {
       return 'Select a date range';
     }
-    if (activeRange === 'Day' || !date.to || format(date.from, 'PPP') === format(date.to, 'PPP')) {
+    if (activeRange === 'Day') {
+        return format(date.from, 'MMMM dd, yyyy');
+    }
+     if (!date.to || format(date.from, 'PPP') === format(date.to, 'PPP')) {
       return format(date.from, 'MMMM dd, yyyy');
     }
     return `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}`;
   }, [date, activeRange]);
 
 
-  const handleDownload = (format: 'pdf' | 'csv') => {
-    const reportContent = `BrightEco Usage Report\nDate: ${displayedDate}\nFormat: ${format.toUpperCase()}\n\n---\nThis is a sample report. In a real application, this would contain detailed usage data.`;
-    const blob = new Blob([reportContent], { type: format === 'pdf' ? 'application/pdf' : 'text/csv' });
+  const handleDownload = (formatType: 'pdf' | 'csv') => {
+    // In a real app, this would be a more sophisticated report
+    const headers = ['Period', 'Usage (kWh)'];
+    const rows = chartData.map(item => [item[dataKey], item.usage]);
+    
+    let reportContent = `BrightEco Usage Report\nDate Range: ${displayedDate}\n\n`;
+
+    if(formatType === 'csv') {
+      reportContent += headers.join(',') + '\n';
+      rows.forEach(row => {
+        reportContent += row.join(',') + '\n';
+      });
+    } else { // Plain text for "PDF"
+       reportContent += headers.join('\t\t') + '\n';
+       reportContent += "-------------------------\n";
+       rows.forEach(row => {
+        reportContent += row.join('\t\t') + '\n';
+      });
+    }
+
+    const blob = new Blob([reportContent], { type: formatType === 'csv' ? 'text/csv' : 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `usage-report-${new Date().toISOString().split('T')[0]}.${format}`;
+    a.download = `usage-report-${format(new Date(), 'yyyy-MM-dd')}.${formatType === 'csv' ? 'csv' : 'txt'}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+  
+  const handleDateNav = (direction: 'prev' | 'next') => {
+    if(!date?.from) return;
+    const d = direction === 'prev' ? -1 : 1;
+
+     switch (activeRange) {
+        case 'Day':
+            setDate({ from: addDays(date.from, d), to: addDays(date.from, d) });
+            break;
+        case 'Week':
+            const newWeekStart = addWeeks(date.from, d);
+            setDate({ from: startOfWeek(newWeekStart), to: endOfWeek(newWeekStart) });
+            break;
+        case 'Month':
+             const newMonthStart = addMonths(date.from, d);
+             setDate({ from: startOfMonth(newMonthStart), to: endOfMonth(newMonthStart) });
+            break;
+        case 'Year':
+            const newYearStart = addYears(date.from, d);
+            setDate({ from: startOfYear(newYearStart), to: endOfYear(newYearStart) });
+            break;
+    }
+  }
   
   return (
     <div className="space-y-6">
@@ -143,13 +215,26 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        {usageStats.map(stat => (
-                            <div key={stat.title} className="p-4 rounded-lg bg-muted/50">
-                                <p className="text-sm text-muted-foreground">{stat.title}</p>
-                                <p className="text-xl font-bold">{stat.value}</p>
-                                <p className="text-xs text-muted-foreground">{stat.estimate}</p>
-                            </div>
-                        ))}
+                        <div className="p-4 rounded-lg bg-muted/50">
+                            <p className="text-sm text-muted-foreground">Daily Total</p>
+                            <p className="text-xl font-bold">6.40 kWh</p>
+                            <p className="text-xs text-muted-foreground">KES 75</p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-muted/50">
+                            <p className="text-sm text-muted-foreground">Weekly Total</p>
+                            <p className="text-xl font-bold">45 kWh</p>
+                            <p className="text-xs text-muted-foreground">KES 520</p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-muted/50">
+                            <p className="text-sm text-muted-foreground">Monthly Total</p>
+                            <p className="text-xl font-bold">180 kWh</p>
+                             <p className="text-xs text-muted-foreground">KES 2,100</p>
+                        </div>
+                        <div className="p-4 rounded-lg bg-muted/50">
+                            <p className="text-sm text-muted-foreground">Yearly Total</p>
+                            <p className="text-xl font-bold">2,190 kWh</p>
+                             <p className="text-xs text-muted-foreground">KES 25,550</p>
+                        </div>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-4">
@@ -167,7 +252,7 @@ export default function DashboardPage() {
                             ))}
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon" className="h-9 w-9">
+                             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleDateNav('prev')}>
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
                             <Popover>
@@ -188,7 +273,7 @@ export default function DashboardPage() {
                                 />
                                 </PopoverContent>
                             </Popover>
-                             <Button variant="outline" size="icon" className="h-9 w-9">
+                             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleDateNav('next')}>
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
                         </div>
@@ -197,7 +282,11 @@ export default function DashboardPage() {
                     <Separator />
 
                     <div className="h-[250px] w-full">
-                        <EnergyUsageChart />
+                        <EnergyUsageChart 
+                            data={chartData} 
+                            dataKey={dataKey} 
+                            unit={activeRange === 'Day' ? 'Wh' : 'kWh'}
+                        />
                     </div>
 
                     <div className="flex justify-end">

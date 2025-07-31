@@ -6,12 +6,56 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Bell, FileText, Shield, Trash2 } from "lucide-react";
+import { Bell, FileText, Shield, Trash2, Loader } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
+
 
 export default function SettingsPage() {
     const { toast } = useToast();
+    const { signOut } = useAuth();
+    const router = useRouter();
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDeleteAccount = async () => {
+        setIsDeleting(true);
+        // In a real app, you would make an API call to delete the user's data from your database
+        // and then delete their Firebase Auth account.
+        console.log("Simulating account deletion...");
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        try {
+            await signOut();
+            toast({
+                title: "Account Deleted",
+                description: "Your account and all associated data have been permanently deleted.",
+            });
+            router.push('/');
+        } catch (error: any) {
+            toast({
+                title: "Deletion Failed",
+                description: "Could not sign out after deletion. Please clear your cookies.",
+                variant: "destructive"
+            })
+        } finally {
+            setIsDeleting(false);
+        }
+    }
+
 
     return (
         <div className="space-y-8 max-w-3xl mx-auto">
@@ -67,13 +111,35 @@ export default function SettingsPage() {
                             <p className="font-medium text-destructive">Delete Account</p>
                             <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data.</p>
                         </div>
-                        <Button 
-                            variant="destructive" 
-                            size="sm" 
-                            onClick={() => toast({ title: "Action Not Available", description: "This feature is not yet implemented.", variant: "destructive"})}
-                        >
-                            Delete <Trash2 className="ml-2 h-4 w-4" />
-                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button 
+                                    variant="destructive" 
+                                    size="sm"
+                                >
+                                    Delete <Trash2 className="ml-2 h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your
+                                    account and remove your data from our servers.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={handleDeleteAccount}
+                                    disabled={isDeleting}
+                                    className="bg-destructive hover:bg-destructive/90"
+                                >
+                                    {isDeleting ? <Loader className="animate-spin" /> : "Yes, delete account"}
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </div>
                 </CardContent>
             </Card>
