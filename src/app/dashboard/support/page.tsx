@@ -154,7 +154,14 @@ export default function SupportPage() {
               <MapPin className="h-6 w-6 text-muted-foreground mt-1" />
               <div>
                 <p className="font-semibold">Our Office</p>
-                <p className="text-sm text-muted-foreground">123 Solar Avenue, Nairobi, Kenya</p>
+                 <a 
+                  href="https://www.google.com/maps/search/?api=1&query=123+Solar+Avenue,+Nairobi,+Kenya" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  <p className="text-sm text-muted-foreground">123 Solar Avenue, Nairobi, Kenya</p>
+                </a>
               </div>
             </div>
           </CardContent>
@@ -168,7 +175,7 @@ export default function SupportPage() {
           </CardHeader>
           <CardContent>
              <Button variant="outline" asChild>
-                <Link href="/dashboard/support/faq">Visit FAQ Page</Link>
+                <Link href="/faq" target="_blank">Visit FAQ Page</Link>
              </Button>
           </CardContent>
         </Card>
