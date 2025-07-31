@@ -13,9 +13,9 @@ import {useToast} from '@/hooks/use-toast';
 
 export function AdminDashboard() {
   const {toast} = useToast();
-  const [paymentCompliance, setPaymentCompliance] = useState(85);
+  const [schoolsOnTime, setSchoolsOnTime] = useState(85);
   const [systemUptime, setSystemUptime] = useState(99);
-  const [customerChurnRate, setCustomerChurnRate] = useState(5);
+  const [avgStudyHours, setAvgStudyHours] = useState(6);
   const [overallRevenue, setOverallRevenue] = useState(5000000);
   const [loading, setLoading] = useState(false);
   const [insights, setInsights] = useState<string | null>(null);
@@ -24,10 +24,12 @@ export function AdminDashboard() {
     setLoading(true);
     setInsights(null);
     try {
+      // Note: The flow expects different keys, this is a simulation.
+      // For a real implementation, the flow input schema should be updated.
       const result = await generateInsightsDashboard({
-        paymentCompliance,
+        paymentCompliance: schoolsOnTime,
         systemUptime,
-        customerChurnRate,
+        customerChurnRate: 100 - schoolsOnTime, // Simulate churn
         overallRevenue,
       });
       setInsights(result.dashboardContent);
@@ -61,24 +63,37 @@ export function AdminDashboard() {
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle className="font-headline text-xl">
-            Business KPI Simulation
+            Education KPI Simulation
           </CardTitle>
            <CardDescription>
-            Adjust the sliders to simulate business metrics and generate an AI report.
+            Adjust the sliders to simulate school metrics and generate an AI report.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
             <Label htmlFor="compliance" className="flex justify-between">
-              <span>Payment Compliance</span>
-              <span className="font-bold text-primary">{paymentCompliance}%</span>
+              <span>Schools On Time</span>
+              <span className="font-bold text-primary">{schoolsOnTime}%</span>
             </Label>
             <Slider
               id="compliance"
-              value={[paymentCompliance]}
-              onValueChange={([v]) => setPaymentCompliance(v)}
+              value={[schoolsOnTime]}
+              onValueChange={([v]) => setSchoolsOnTime(v)}
               max={100}
               step={1}
+            />
+          </div>
+           <div className="space-y-3">
+            <Label htmlFor="study-hours" className="flex justify-between">
+              <span>Avg. Daily Study Hours</span>
+              <span className="font-bold text-primary">{avgStudyHours} hrs</span>
+            </Label>
+            <Slider
+              id="study-hours"
+              value={[avgStudyHours]}
+              onValueChange={([v]) => setAvgStudyHours(v)}
+              max={12}
+              step={0.5}
             />
           </div>
           <div className="space-y-3">
@@ -95,21 +110,8 @@ export function AdminDashboard() {
             />
           </div>
           <div className="space-y-3">
-            <Label htmlFor="churn" className="flex justify-between">
-              <span>Customer Churn Rate</span>
-              <span className="font-bold text-primary">{customerChurnRate}%</span>
-            </Label>
-            <Slider
-              id="churn"
-              value={[customerChurnRate]}
-              onValueChange={([v]) => setCustomerChurnRate(v)}
-              max={50}
-              step={0.5}
-            />
-          </div>
-          <div className="space-y-3">
             <Label htmlFor="revenue" className="flex justify-between">
-              <span>Overall Revenue</span>
+              <span>Termly Revenue</span>
               <span className="font-bold text-primary">
                 Ksh {overallRevenue.toLocaleString()}
               </span>
@@ -142,7 +144,7 @@ export function AdminDashboard() {
                     <Bot className="text-primary" /> AI Generated Insights
                 </CardTitle>
                 <CardDescription>
-                    Summary of the business performance based on the KPIs.
+                    Analysis of school performance based on the KPIs.
                 </CardDescription>
             </div>
             <Button variant="outline" size="icon" onClick={handleDownload} disabled={!insights}>
@@ -163,7 +165,7 @@ export function AdminDashboard() {
           ) : (
             !loading && (
               <p className="text-muted-foreground">
-                Adjust the KPIs on the left and click &quot;Generate Insights&quot; to see AI-powered analysis.
+                Adjust the KPIs on the left and click &quot;Generate Insights&quot; to see AI-powered analysis for your schools.
               </p>
             )
           )}
