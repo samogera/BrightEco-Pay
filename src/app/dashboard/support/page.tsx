@@ -96,7 +96,7 @@ export default function SupportPage() {
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" name="phone" placeholder="+254 712 345 678" />
+                    <Input id="phone" name="phone" placeholder="+254 746 610 345" />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="location">Your Location (Optional)</Label>
@@ -146,14 +146,14 @@ export default function SupportPage() {
               <Phone className="h-6 w-6 text-muted-foreground mt-1" />
               <div>
                 <p className="font-semibold">Call Us</p>
-                <a href="tel:+254712345678" className="text-primary hover:underline">+254 712 345 678</a>
+                <a href="tel:+254746610345" className="text-primary hover:underline">+254746610345</a>
               </div>
             </div>
              <div className="flex items-start gap-4">
               <MessageSquare className="h-6 w-6 text-muted-foreground mt-1" />
               <div>
                 <p className="font-semibold">WhatsApp</p>
-                <a href="https://wa.me/254712345678" target="_blank" className="text-primary hover:underline">+254 712 345 678</a>
+                <a href="https://wa.me/254746610345" target="_blank" className="text-primary hover:underline">+254746610345</a>
               </div>
             </div>
              <div className="flex items-start gap-4">
