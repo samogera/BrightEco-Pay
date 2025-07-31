@@ -8,7 +8,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Card, CardContent } from '@/components/ui/card';
-import { HelpCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { HelpCircle, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const faqItems = [
@@ -49,14 +50,20 @@ export default function FaqPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-            <HelpCircle className="mx-auto h-12 w-12 text-primary mb-4" />
-            <h1 className="font-headline text-3xl md:text-4xl font-bold">
-            Frequently Asked Questions
-            </h1>
-            <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-            Find quick answers to common questions about your BrightEco solar system, billing, and account.
-            </p>
+        <div className="flex items-center justify-between mb-8">
+            <div className="text-center flex-grow">
+                <HelpCircle className="mx-auto h-12 w-12 text-primary mb-4" />
+                <h1 className="font-headline text-3xl md:text-4xl font-bold">
+                Frequently Asked Questions
+                </h1>
+                <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
+                Find quick answers to common questions about your BrightEco solar system, billing, and account.
+                </p>
+            </div>
+             <Button variant="outline" onClick={() => router.push('/dashboard/support')}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Support
+            </Button>
         </div>
 
       <Card>

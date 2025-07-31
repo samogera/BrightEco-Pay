@@ -164,9 +164,9 @@ export default function ContactPage() {
                         <CardTitle className="font-headline text-lg flex items-center gap-2"><HelpCircle className="text-primary"/> Looking for Answers?</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground mb-4">Check our FAQ page for quick answers to common questions. You may need to log in.</p>
+                        <p className="text-muted-foreground mb-4">Check our FAQ page for quick answers to common questions.</p>
                         <Button variant="outline" asChild>
-                            <Link href="/login">Visit FAQ Page</Link>
+                            <Link href="/faq">Visit FAQ Page</Link>
                         </Button>
                     </CardContent>
                 </Card>

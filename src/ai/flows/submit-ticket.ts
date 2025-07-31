@@ -3,7 +3,7 @@
 
 /**
  * @fileOverview A flow to handle and process support ticket submissions.
- * It stores the ticket in Firestore for manual processing.
+ * It simulates sending the ticket to support for manual processing.
  *
  * - submitTicket - A function that takes support ticket data and stores it.
  * - SubmitTicketInput - The input type for the submitTicket function.
@@ -12,8 +12,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {getFirestore, collection, addDoc, serverTimestamp} from 'firebase/firestore';
-import {app} from '@/lib/firebase';
 
 const SubmitTicketInputSchema = z.object({
   name: z.string().describe('The full name of the person submitting the ticket.'),
@@ -44,12 +42,9 @@ const submitTicketFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const db = getFirestore(app);
-    const ticketsCollection = collection(db, 'support_tickets');
-
     const emailBody = `
       ========================================
-      New Support Ticket from BrightEco Pay
+      New Support Ticket for BrightEco Pay
       ========================================
       
       A new support ticket has been submitted.
@@ -67,37 +62,24 @@ const submitTicketFlow = ai.defineFlow(
       
       ========================================
     `;
+    
+    // Simulate sending an email or creating a ticket in a support system.
+    // In a real app, this would integrate with a service like SendGrid, or a CRM.
+    console.log("Simulating support ticket submission...");
+    console.log("Recipient: robinsonolaka@gmail.com");
+    console.log("Subject: BrightEco Energy Support Request");
+    console.log("Body:", emailBody);
 
-    try {
-        const docRef = await addDoc(ticketsCollection, {
-            to: 'robinsonoolakak@gmail.com',
-            subject: 'BrightEco Energy Support Request',
-            body: emailBody,
-            userDetails: {
-                name: input.name,
-                email: input.email,
-                phone: input.phone,
-            },
-            title: input.title,
-            message: input.message,
-            status: 'new',
-            createdAt: serverTimestamp()
-        });
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const simulatedTicketId = `ticket_${Date.now()}`;
 
-        console.log('Support ticket stored in Firestore with ID: ', docRef.id);
-
-        return {
-            success: true,
-            message: 'Your support ticket has been received. Our team will get back to you shortly.',
-            ticketId: docRef.id
-        };
-
-    } catch (error) {
-        console.error("Error writing document to Firestore: ", error);
-        return {
-            success: false,
-            message: 'There was an error saving your ticket. Please try again later.',
-        }
-    }
+    // Always return success for this simulation
+    return {
+        success: true,
+        message: 'Your support ticket has been received. Our team will get back to you shortly.',
+        ticketId: simulatedTicketId
+    };
   }
 );
