@@ -50,11 +50,13 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
         const userNotifications: Notification[] = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            userNotifications.push({
-                id: doc.id,
-                ...data,
-                timestamp: (data.timestamp as Timestamp).toDate(),
-            } as Notification);
+            if (data.timestamp) { // Check if the timestamp field is not null
+                userNotifications.push({
+                    id: doc.id,
+                    ...data,
+                    timestamp: (data.timestamp as Timestamp).toDate(),
+                } as Notification);
+            }
         });
         setNotifications(userNotifications);
         setLoading(false);
