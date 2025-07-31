@@ -33,7 +33,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
+import { Badge } from '@/components/ui/badge';
 
 
 function PayPalIcon(props: React.SVGProps<SVGSVGElement>) {
