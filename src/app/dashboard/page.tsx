@@ -26,17 +26,26 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { differenceInDays, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { useState } from 'react';
 
 
 function GracePeriodAlert() {
   const { balance, dueDate } = useBilling();
   
-  if (!dueDate) return null;
+  if (!dueDate || balance <= 0) return null;
 
   const daysRemaining = differenceInDays(dueDate, new Date());
 
-  if (daysRemaining > 10 || balance <= 0) {
-    return null;
+  if (daysRemaining > 10) {
+    return (
+         <Alert variant="default" className="bg-primary/10 border-primary/20 text-primary-foreground">
+            <AlertTriangle className="h-5 w-5 text-primary" />
+            <AlertTitle className="text-primary">All Systems Green!</AlertTitle>
+            <AlertDescription className="flex items-center justify-between text-primary/80">
+                <span>Your account is in good standing. Your next payment is due on {format(dueDate, 'MMMM dd, yyyy')}.</span>
+            </AlertDescription>
+        </Alert>
+    );
   }
 
   const alertVariant = daysRemaining <= 5 ? 'destructive' : 'warning';
@@ -69,8 +78,11 @@ const usageStats = [
     { title: 'Yearly Total', value: '7,368 kWh', estimate: 'KES 89,500' },
 ]
 
+type TimeRange = 'Day' | 'Week' | 'Month' | 'Year';
+
 export default function DashboardPage() {
   const { balance, dueDate } = useBilling();
+  const [activeRange, setActiveRange] = useState<TimeRange>('Day');
   
   return (
     <div className="space-y-6">
@@ -98,10 +110,10 @@ export default function DashboardPage() {
 
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-1">
-                            <Button variant="default" size="sm">Day</Button>
-                            <Button variant="ghost" size="sm">Week</Button>
-                            <Button variant="ghost" size="sm">Month</Button>
-                            <Button variant="ghost" size="sm">Year</Button>
+                            <Button variant={activeRange === 'Day' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveRange('Day')}>Day</Button>
+                            <Button variant={activeRange === 'Week' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveRange('Week')}>Week</Button>
+                            <Button variant={activeRange === 'Month' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveRange('Month')}>Month</Button>
+                            <Button variant={activeRange === 'Year' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveRange('Year')}>Year</Button>
                              <Button variant="outline" size="icon" className="h-9 w-9">
                                 <CalendarDays className="h-4 w-4" />
                             </Button>
@@ -172,3 +184,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

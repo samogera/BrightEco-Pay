@@ -76,20 +76,29 @@ export default function BillingPage() {
   }
 
   const processPayment = async (amount: number, method: string, details: string) => {
-    await makePayment(amount);
-    await addInvoice({
-        id: `INV-${Date.now()}`,
-        amount,
-        date: new Date(),
-        method,
-        status: 'Paid',
-        details,
-    });
-     toast({
-        title: 'Payment Successful',
-        description: `Your ${method} payment of KES ${amount} has been processed.`,
-    });
-    setPaymentAmount('');
+    setLoading(true);
+    try {
+        await makePayment(amount);
+        await addInvoice({
+            amount,
+            method,
+            status: 'Paid',
+            details,
+        });
+         toast({
+            title: 'Payment Successful',
+            description: `Your ${method} payment of KES ${amount} has been processed.`,
+        });
+        setPaymentAmount('');
+    } catch(err: any) {
+        toast({
+            title: 'Payment Failed',
+            description: err.message,
+            variant: 'destructive',
+        });
+    } finally {
+        setLoading(false);
+    }
   }
 
   const handleMobileMoneyPayment = async () => {
@@ -157,28 +166,17 @@ export default function BillingPage() {
         return;
     }
 
-    setLoading(true);
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
-    try {
-        const last4 = cardNumber.slice(-4);
-        await processPayment(numericAmount, 'Card', `Card ending in ${last4}`);
-        setCardNumber('');
-        setExpiryDate('');
-        setCvc('');
-        setCardType('');
-    } catch (error: any) {
-         toast({
-            title: 'Payment Failed',
-            description: error.message,
-            variant: 'destructive',
-        });
-    } finally {
-        setLoading(false);
-    }
+    const last4 = cardNumber.slice(-4);
+    await processPayment(numericAmount, 'Card', `Card ending in ${last4}`);
+    setCardNumber('');
+    setExpiryDate('');
+    setCvc('');
+    setCardType('');
   }
   
-  const handlePayPalPayment = () => {
+  const handlePayPalPayment = async () => {
      const numericAmount = Number(paymentAmount);
     if (!paymentAmount || isNaN(numericAmount) || numericAmount <= 0) {
       toast({ title: 'Invalid Amount', description: 'Please enter a valid amount.', variant: 'destructive' });
@@ -301,10 +299,10 @@ export default function BillingPage() {
              <div className="space-y-4 text-center max-w-md mx-auto">
                 <h3 className="text-lg font-medium">Pay with PayPal</h3>
                 <p className="text-muted-foreground">You will be redirected to PayPal to complete your payment securely.</p>
-                <Button asChild className="w-full sm:w-auto" disabled={loading || !paymentAmount} onClick={handlePayPalPayment}>
-                    <a target="_blank" rel="noopener noreferrer">
-                        {loading ? <Loader className="animate-spin" /> : <><PayPalIcon className="mr-2"/> Proceed to PayPal</>}
-                    </a>
+                <Button className="w-full sm:w-auto" disabled={loading || !paymentAmount} onClick={handlePayPalPayment}>
+                  <a target="_blank" rel="noopener noreferrer">
+                      {loading ? <Loader className="animate-spin" /> : <><PayPalIcon className="mr-2"/> Proceed to PayPal</>}
+                  </a>
                 </Button>
             </div>
           </TabsContent>
@@ -323,3 +321,5 @@ export default function BillingPage() {
     </div>
   );
 }
+
+    

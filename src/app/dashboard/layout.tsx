@@ -55,7 +55,6 @@ const menuItems = [
   {href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard},
   {href: '/dashboard/devices', label: 'Devices', icon: Smartphone},
   {href: '/dashboard/billing', label: 'Billing', icon: CreditCard},
-  {href: '/dashboard/education', label: 'Education', icon: BookOpen},
   {href: '/dashboard/profile', label: 'Profile', icon: User},
   {href: '/dashboard/support', label: 'Support', icon: LifeBuoy},
 ];
@@ -212,3 +211,5 @@ export default function DashboardLayout({children}: PropsWithChildren) {
     </SidebarProvider>
   );
 }
+
+    

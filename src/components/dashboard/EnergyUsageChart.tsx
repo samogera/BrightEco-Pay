@@ -1,6 +1,7 @@
+
 'use client';
 
-import {Bar, BarChart, CartesianGrid, XAxis, YAxis} from 'recharts';
+import {Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer} from 'recharts';
 
 import {
   ChartConfig,
@@ -28,28 +29,32 @@ const chartConfig = {
 export function EnergyUsageChart() {
   return (
     <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
-      <BarChart accessibilityLayer data={chartData}>
-        <CartesianGrid vertical={false} strokeDasharray="3 3" strokeOpacity={0.2} />
-        <XAxis
-          dataKey="month"
-          tickLine={false}
-          tickMargin={10}
-          axisLine={false}
-          tickFormatter={value => value.slice(0, 3)}
-        />
-        <YAxis
-          stroke="hsl(var(--muted-foreground))"
-          fontSize={12}
-          tickLine={false}
-          axisLine={false}
-          tickFormatter={value => `${value} kWh`}
-        />
-        <ChartTooltip
-          cursor={false}
-          content={<ChartTooltipContent indicator="dot" />}
-        />
-        <Bar dataKey="usage" fill="var(--color-usage)" radius={4} />
-      </BarChart>
+      <ResponsiveContainer>
+        <BarChart accessibilityLayer data={chartData}>
+          <CartesianGrid vertical={false} strokeDasharray="3 3" strokeOpacity={0.2} />
+          <XAxis
+            dataKey="month"
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
+            tickFormatter={value => value.slice(0, 3)}
+          />
+          <YAxis
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={value => `${value} kWh`}
+          />
+          <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent indicator="dot" />}
+          />
+          <Bar dataKey="usage" fill="var(--color-usage)" radius={4} />
+        </BarChart>
+      </ResponsiveContainer>
     </ChartContainer>
   );
 }
+
+    

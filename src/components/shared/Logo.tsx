@@ -1,3 +1,4 @@
+
 import type {FC} from 'react';
 import Link from 'next/link';
 
@@ -14,7 +15,7 @@ export const Logo: FC = () => {
             className="text-primary"
           >
             <path
-              d="M16.49 3.00999L6.49001 13.11V21.0099H18.49L16.49 11.0099H10.49L16.49 3.00999Z"
+              d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
@@ -28,3 +29,5 @@ export const Logo: FC = () => {
     </Link>
   );
 };
+
+    
