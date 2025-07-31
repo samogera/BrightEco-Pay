@@ -33,7 +33,7 @@ Phone: ${user?.phoneNumber || 'N/A'}
 Address: ${userData?.address || 'Not Provided'}
 
 --- Invoice Details ---
-Invoice ID: ${invoice.id}
+Invoice ID: ${invoice.id.substring(0,8)}...
 Invoice Date: ${format(new Date(), 'MMMM dd, yyyy, hh:mm a')}
 Billing Period: ${billingPeriodStart} - ${billingPeriodEnd}
 

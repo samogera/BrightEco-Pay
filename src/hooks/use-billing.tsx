@@ -4,7 +4,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { addDays, addMonths } from 'date-fns';
 import { useAuth } from './use-auth';
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, Timestamp, runTransaction, DocumentReference, writeBatch } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, Timestamp, runTransaction, DocumentReference, writeBatch, deleteDoc } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
 const MOCK_MONTHLY_FEE = 2550;
@@ -40,6 +40,7 @@ interface BillingContextType extends BillingState {
   addToWallet: (amount: number) => Promise<number>;
   addPaymentMethod: (method: Omit<PaymentMethod, 'id'>) => Promise<void>;
   setPreferredMethod: (methodId: string) => Promise<void>;
+  deletePaymentMethod: (methodId: string) => Promise<void>;
 }
 
 const BillingContext = createContext<BillingContextType | undefined>(undefined);
@@ -191,8 +192,15 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     });
     await batch.commit();
   }, [user, paymentMethods]);
+  
+  const deletePaymentMethod = useCallback(async (methodId: string) => {
+    if (!user) throw new Error("User not authenticated");
+    const db = getFirestore(app);
+    const methodDocRef = doc(db, 'billing', user.uid, 'paymentMethods', methodId);
+    await deleteDoc(methodDocRef);
+  }, [user]);
 
-  const value = { ...billingState, invoices, paymentMethods, loading, makePayment, addInvoice, addToWallet, addPaymentMethod, setPreferredMethod };
+  const value = { ...billingState, invoices, paymentMethods, loading, makePayment, addInvoice, addToWallet, addPaymentMethod, setPreferredMethod, deletePaymentMethod };
 
   return (
     <BillingContext.Provider value={value}>

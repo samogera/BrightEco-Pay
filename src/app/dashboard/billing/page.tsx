@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { Loader, CreditCard, Smartphone, Wallet, ChevronsRight, PlusCircle, Star } from 'lucide-react';
+import { Loader, CreditCard, Smartphone, Wallet, ChevronsRight, PlusCircle, Star, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -35,6 +35,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 
 function PayPalIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -70,6 +81,7 @@ export default function BillingPage() {
       paymentMethods,
       addPaymentMethod,
       setPreferredMethod,
+      deletePaymentMethod,
    } = useBilling();
   const { addNotification } = useNotifications();
   const [paymentAmount, setPaymentAmount] = useState('');
@@ -117,7 +129,7 @@ export default function BillingPage() {
         await addNotification({
             type: 'payment',
             title: 'Payment Received',
-            description: `Successfully processed KES ${amount.toFixed(2)} via ${method}. Invoice ID: ${newInvoice.id}`,
+            description: `Successfully processed KES ${amount.toFixed(2)} via ${method}. Invoice ID: ${newInvoice.id.substring(0,8)}...`,
             link: `/dashboard/billing/history#${newInvoice.id}`,
         })
         setPaymentAmount('');
@@ -138,7 +150,7 @@ export default function BillingPage() {
         const newWalletBalance = await addToWallet(amount);
          toast({
             title: 'Wallet Top-Up Successful',
-            description: `KES ${amount} has been added to your Solar Wallet via ${method}.`,
+            description: `KES ${amount} has been added to your BrightEco Wallet via ${method}.`,
         });
         await addNotification({
             type: 'wallet',
@@ -229,7 +241,7 @@ export default function BillingPage() {
         toast({ title: 'Insufficient Wallet Balance', description: 'Please top up your wallet to pay.', variant: 'destructive' });
         return;
     }
-    await processPayment(balance, 'Solar Wallet', `Discounted payment from wallet.`);
+    await processPayment(balance, 'BrightEco Wallet', `Discounted payment from wallet.`);
   }
 
   const handleAddCard = async () => {
@@ -258,6 +270,18 @@ export default function BillingPage() {
     setNewCardExpiry('');
     setNewCardCvc('');
     toast({ title: 'Payment Method Added', description: 'Your new card has been saved.' });
+  }
+  
+  const handleDeleteCard = async (methodId: string) => {
+    setProcessingMethod(`delete-${methodId}`);
+    try {
+        await deletePaymentMethod(methodId);
+        toast({ title: 'Card Removed', description: 'The payment method has been successfully removed.' });
+    } catch(err: any) {
+        toast({ title: 'Failed to Remove Card', description: err.message, variant: 'destructive'});
+    } finally {
+        setProcessingMethod(null);
+    }
   }
 
   const isLoading = !!processingMethod;
@@ -293,7 +317,7 @@ export default function BillingPage() {
             </div>
              <Card className="bg-primary/5">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2"><Wallet className="text-primary"/> Solar Wallet</CardTitle>
+                    <CardTitle className="text-base flex items-center gap-2"><Wallet className="text-primary"/> BrightEco Wallet</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-2xl font-bold text-primary">KES {walletBalance.toFixed(2)}</p>
@@ -346,7 +370,7 @@ export default function BillingPage() {
                         </div>
                     </div>
                     <Card className="bg-muted/30">
-                        <CardHeader><CardTitle>Pay with Solar Wallet</CardTitle><CardDescription>Get a 1.5% discount when you pay your full balance from your wallet.</CardDescription></CardHeader>
+                        <CardHeader><CardTitle>Pay with BrightEco Wallet</CardTitle><CardDescription>Get a 1.5% discount when you pay your full balance from your wallet.</CardDescription></CardHeader>
                         <CardContent>
                              <div className="space-y-2"><p className="text-sm text-muted-foreground">Current Balance</p><p className="font-bold">KES {balance.toFixed(2)}</p></div>
                              <div className="space-y-2 mt-2"><p className="text-sm text-muted-foreground">Discount (1.5%)</p><p className="font-bold text-primary">- KES {(balance * 0.015).toFixed(2)}</p></div>
@@ -361,7 +385,7 @@ export default function BillingPage() {
             </TabsContent>
             <TabsContent value="top-up" className="mt-6">
                 <div className="max-w-md mx-auto text-center space-y-4">
-                     <h3 className="text-lg font-medium">Top Up Your Solar Wallet</h3>
+                     <h3 className="text-lg font-medium">Top Up Your BrightEco Wallet</h3>
                      <p className="text-muted-foreground">Add funds to your wallet using any payment method. You can use your wallet balance to pay for your bills with a discount.</p>
                      <div className="space-y-2 text-left">
                         <Label htmlFor="top-up-amount">Amount to Add (KES)</Label>
@@ -411,9 +435,32 @@ export default function BillingPage() {
                                         {method.isPreferred && <Badge variant="default" className="mt-1">Preferred</Badge>}
                                     </div>
                                 </div>
+                                <div className="flex items-center gap-2">
                                 {!method.isPreferred && (
-                                     <Button variant="outline" size="sm" onClick={() => setPreferredMethod(method.id!)}><Star className="mr-2 h-4 w-4" /> Set as Preferred</Button>
+                                     <Button variant="outline" size="sm" onClick={() => setPreferredMethod(method.id!)} disabled={isLoading}><Star className="mr-2 h-4 w-4" /> Set as Preferred</Button>
                                 )}
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" disabled={isLoading}>
+                                            {processingMethod === `delete-${method.id}` ? <Loader className="animate-spin h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently remove this card from your payment methods.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteCard(method.id!)} className="bg-destructive hover:bg-destructive/90">
+                                                Yes, Remove Card
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                                </div>
                             </div>
                         )) : (
                             <p className="text-muted-foreground text-center py-4">No cards saved.</p>

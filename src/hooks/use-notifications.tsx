@@ -5,7 +5,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, useCa
 import { useAuth } from './use-auth';
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, Timestamp, writeBatch, doc, setDoc } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
-import { CreditCard, Sun, Wallet } from 'lucide-react';
+import { CreditCard, Sun, Wallet, Bell } from 'lucide-react';
 
 export interface Notification {
     id: string;
