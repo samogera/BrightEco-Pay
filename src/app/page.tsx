@@ -161,10 +161,10 @@ export default function Home() {
                 <p className="max-w-2xl mx-auto text-lg text-muted-foreground mb-8">Download our mobile app to track usage, make payments, and get support anytime, anywhere.</p>
                 <div className="flex justify-center items-center flex-wrap gap-4">
                      <a href="#" className="inline-block transition-transform hover:scale-105">
-                        <Image src="https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=google-play" width={180} height={60} alt="Get it on Google Play" />
+                        <Image src="https://logowik.com/content/uploads/images/google-play-store.jpg" width={180} height={60} alt="Get it on Google Play" />
                      </a>
                      <a href="#" className="inline-block transition-transform hover:scale-105">
-                        <Image src="https://img.shields.io/badge/App_Store-0D96C8?style=for-the-badge&logo=app-store&logoColor=white" width={180} height={60} alt="Download on the App Store" />
+                        <Image src="https://logowik.com/content/uploads/images/app-store6550.jpg" width={180} height={60} alt="Download on the App Store" />
                      </a>
                 </div>
             </div>
