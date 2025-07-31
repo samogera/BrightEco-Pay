@@ -30,6 +30,31 @@ const features = [
     }
 ]
 
+function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
+    return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          {...props}
+        >
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+          <path d="M16.36 12c.14.3.24.63.31.98" />
+          <path d="M12.6 8.62c.33.1.64.24.94.4" />
+          <path d="M19.09 10.32c.18.33.32.68.42 1.05" />
+          <path d="M7.64 12c-.14-.3-.24-.63-.31-.98" />
+          <path d="M11.4 8.62c-.33-.1-.64-.24-.94-.4" />
+          <path d="M4.91 10.32c-.18-.33-.32-.68-.42-1.05" />
+        </svg>
+    )
+}
+
 export default function Home() {
     const [monthlyBill, setMonthlyBill] = useState(3000);
     const yearlySavings = (monthlyBill * 12 * 0.3).toLocaleString('en-US', {
@@ -211,7 +236,7 @@ export default function Home() {
                <div className="space-y-2">
                   <h4 className="font-headline font-semibold">Contact Us</h4>
                   <ul className="space-y-1 text-muted-foreground">
-                      <li><a href="https://wa.me/254746610345" target="_blank" className="hover:text-primary">WhatsApp</a></li>
+                      <li><a href="https://wa.me/254746610345" target="_blank" className="hover:text-primary flex items-center gap-2"><WhatsAppIcon className="h-4 w-4" /> WhatsApp</a></li>
                       <li><p>123 Solar Avenue, Nairobi, Kenya</p></li>
                   </ul>
               </div>
