@@ -43,7 +43,7 @@ export default function ProfilePage() {
     try {
         if (avatarFile) {
             await updateUserAvatar(avatarFile);
-            setAvatarFile(null); // Clear file after upload
+            setAvatarFile(null);
         }
         
         if (name !== user?.displayName) {
@@ -82,7 +82,7 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-headline text-xl">Your Profile</CardTitle>
-          <CardDescription>View and manage your account details. Changes are saved automatically.</CardDescription>
+          <CardDescription>View and manage your account details.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleSaveChanges}>
@@ -151,7 +151,6 @@ export default function ProfilePage() {
                 </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-                <Button type="button" variant="outline" disabled={loading}>Discard</Button>
                 <Button type="submit" disabled={loading}>
                     {loading ? <Loader className="animate-spin" /> : 'Save Changes'}
                 </Button>

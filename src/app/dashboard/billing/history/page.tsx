@@ -85,7 +85,7 @@ export default function BillingHistoryPage() {
                             invoices.map((invoice) => (
                                 <TableRow key={invoice.id}>
                                     <TableCell className="font-medium">{invoice.id}</TableCell>
-                                    <TableCell>{format(invoice.date, 'MMM dd, yyyy')}</TableCell>
+                                    <TableCell>{format(new Date(invoice.date), 'MMM dd, yyyy')}</TableCell>
                                     <TableCell>KES {invoice.amount.toFixed(2)}</TableCell>
                                     <TableCell>{invoice.method}</TableCell>
                                     <TableCell>

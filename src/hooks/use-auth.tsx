@@ -10,7 +10,7 @@ import {
     createUserWithEmailAndPassword, 
     signInWithPopup, 
     GoogleAuthProvider,
-    signOut as firebaseSignOut,
+    signOut as firebaseSignout,
     updateProfile,
     RecaptchaVerifier,
     signInWithPhoneNumber,
@@ -24,7 +24,11 @@ export const useAuth = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+      if (user) {
+        setUser(user);
+      } else {
+        setUser(null);
+      }
     });
     return () => unsubscribe();
   }, [auth, setUser]);
@@ -79,14 +83,15 @@ export const useAuth = () => {
   };
 
   const signOut = () => {
-    return firebaseSignOut(auth);
+    return firebaseSignout(auth);
   };
   
   const updateUserProfile = async (profile: { displayName?: string, photoURL?: string }) => {
     if (auth.currentUser) {
         await updateProfile(auth.currentUser, profile);
-        // Manually update the user in our context to trigger a re-render
-        setUser({...auth.currentUser});
+        // Manually create a new user object to ensure re-render
+        const updatedUser = { ...auth.currentUser };
+        setUser(updatedUser);
         return auth.currentUser;
     }
     throw new Error("No user is signed in.");

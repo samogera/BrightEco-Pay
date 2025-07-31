@@ -25,18 +25,38 @@ interface BillingContextType {
 
 const BillingContext = createContext<BillingContextType | undefined>(undefined);
 
+const getInitialState = () => {
+    if (typeof window === 'undefined') {
+        return {
+            balance: MOCK_MONTHLY_FEE,
+            dueDate: addDays(new Date(), 8),
+            invoices: [],
+        };
+    }
+    const storedBalance = localStorage.getItem('billingBalance');
+    const storedDueDate = localStorage.getItem('billingDueDate');
+    const storedInvoices = localStorage.getItem('billingInvoices');
+
+    return {
+        balance: storedBalance ? JSON.parse(storedBalance) : MOCK_MONTHLY_FEE,
+        dueDate: storedDueDate ? new Date(JSON.parse(storedDueDate)) : addDays(new Date(), 8),
+        invoices: storedInvoices ? JSON.parse(storedInvoices).map((inv: any) => ({...inv, date: new Date(inv.date)})) : [],
+    }
+}
+
+
 export const BillingProvider = ({ children }: { children: ReactNode }) => {
-  const [balance, setBalance] = useState(MOCK_MONTHLY_FEE);
-  const [dueDate, setDueDate] = useState(addDays(new Date(), 8));
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [balance, setBalance] = useState(getInitialState().balance);
+  const [dueDate, setDueDate] = useState(getInitialState().dueDate);
+  const [invoices, setInvoices] = useState<Invoice[]>(getInitialState().invoices);
 
   useEffect(() => {
-    // In a real app, you would fetch these from Firestore
-    const storedInvoices = localStorage.getItem('billingInvoices');
-    if(storedInvoices) {
-        setInvoices(JSON.parse(storedInvoices).map((inv: any) => ({...inv, date: new Date(inv.date)})));
-    }
-  }, [])
+    localStorage.setItem('billingBalance', JSON.stringify(balance));
+  }, [balance]);
+
+  useEffect(() => {
+    localStorage.setItem('billingDueDate', JSON.stringify(dueDate));
+  }, [dueDate]);
   
   const addInvoice = (invoice: Invoice) => {
     setInvoices(prev => {
@@ -53,11 +73,8 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
 
     setBalance((prevBalance) => {
       const newBalance = prevBalance - amount;
-      if (amount >= MOCK_MONTHLY_FEE || newBalance <= 0) {
+      if (newBalance < MOCK_MONTHLY_FEE) { // If they paid more than or equal to their monthly fee, extend by 30 days
         setDueDate((prevDate) => addDays(prevDate, 30));
-      } else {
-        const extensionDays = Math.floor((amount / MOCK_MONTHLY_FEE) * 30);
-        setDueDate((prevDate) => addDays(prevDate, extensionDays));
       }
       return Math.max(0, newBalance);
     });
