@@ -10,8 +10,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { useBilling } from '@/hooks/use-billing';
+import { format } from 'date-fns';
 
 export function BillingInfoCard() {
+  const { balance, dueDate } = useBilling();
 
   return (
     <Card className="h-full flex flex-col">
@@ -24,9 +27,15 @@ export function BillingInfoCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 flex-grow flex flex-col justify-between">
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">Current Term Balance</p>
-          <p className="text-3xl font-bold">KES 12,550.00</p>
+        <div className="space-y-4">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Current Term Balance</p>
+              <p className="text-3xl font-bold">KES {balance.toFixed(2)}</p>
+            </div>
+             <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Next Payment Due</p>
+              <p className="text-xl font-semibold">{format(dueDate, 'MMMM dd, yyyy')}</p>
+            </div>
         </div>
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-2">

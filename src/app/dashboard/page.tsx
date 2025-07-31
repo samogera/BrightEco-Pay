@@ -1,4 +1,6 @@
 
+'use client';
+
 import {
   AlertTriangle,
   BatteryFull,
@@ -6,6 +8,7 @@ import {
   Zap,
   BookOpen,
 } from 'lucide-react';
+import Link from 'next/link';
 
 import {
   Card,
@@ -14,9 +17,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {EnergyUsageChart} from '@/components/dashboard/EnergyUsageChart';
+import { EnergyUsageChart } from '@/components/dashboard/EnergyUsageChart';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { useBilling } from '@/hooks/use-billing';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { differenceInDays, format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { BillingInfoCard } from '@/components/dashboard/BillingInfoCard';
 
 function DeviceStatusCard({
@@ -45,33 +51,41 @@ function DeviceStatusCard({
 }
 
 function GracePeriodAlert() {
-    return (
-        <Card className="bg-destructive/10 border-destructive text-destructive-foreground">
-            <CardHeader className="flex flex-row items-start gap-4 space-y-0">
-                <AlertTriangle className="h-6 w-6 text-destructive" />
-                <div className="flex-1">
-                    <CardTitle>Grace Period Alert</CardTitle>
-                    <CardDescription className="text-destructive-foreground/80">
-                        Your account is currently in a grace period. To avoid service interruption, please make a payment before the period ends in <strong>2 days</strong>.
-                    </CardDescription>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <Button asChild variant="destructive">
-                    <Link href="/dashboard/billing">Pay Now</Link>
-                </Button>
-            </CardContent>
-        </Card>
-    )
+  const { dueDate } = useBilling();
+  const daysRemaining = differenceInDays(dueDate, new Date());
+
+  if (daysRemaining > 10) {
+    return null;
+  }
+
+  const alertVariant = daysRemaining <= 5 ? 'destructive' : 'warning';
+  const alertTitle = daysRemaining <= 5 ? 'Critical: Service Interruption Soon' : 'Payment Reminder';
+  const alertMessage = `Your account is currently in a grace period. To avoid service interruption, please make a payment. Your service is due on ${format(dueDate, 'MMMM dd, yyyy')}.`;
+
+  return (
+    <Alert variant={alertVariant} className={cn(
+        alertVariant === 'warning' && 'bg-amber-500/10 border-amber-500 text-amber-700 dark:text-amber-400 [&>svg]:text-amber-600'
+    )}>
+      <AlertTriangle className="h-5 w-5" />
+      <AlertTitle>{alertTitle}</AlertTitle>
+      <AlertDescription className="flex items-center justify-between">
+        <span>{alertMessage}</span>
+        <Button asChild className={cn(
+            alertVariant === 'destructive' && 'bg-destructive hover:bg-destructive/90',
+            alertVariant === 'warning' && 'bg-amber-600 hover:bg-amber-700 text-white'
+        )}>
+          <Link href="/dashboard/billing">Pay Now</Link>
+        </Button>
+      </AlertDescription>
+    </Alert>
+  );
 }
 
 export default function DashboardPage() {
-  const showGracePeriod = true; // This would be dynamic based on user data
-
   return (
     <div className="space-y-6">
-       {showGracePeriod && <GracePeriodAlert />}
-      
+      <GracePeriodAlert />
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <DeviceStatusCard
           title="Solar Panel Output"
@@ -100,19 +114,21 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+        <Card className="col-span-full lg:col-span-4">
           <CardHeader>
             <CardTitle className="font-headline text-xl">
               Energy Usage
             </CardTitle>
-            <CardDescription>Your school's consumption over the last 6 months.</CardDescription>
+            <CardDescription>
+              Your school's consumption over the last 6 months.
+            </CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
             <EnergyUsageChart />
           </CardContent>
         </Card>
-        <div className="col-span-4 lg:col-span-3">
-          <BillingInfoCard />
+        <div className="col-span-full lg:col-span-3">
+            <BillingInfoCard />
         </div>
       </div>
     </div>

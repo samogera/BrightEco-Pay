@@ -15,8 +15,10 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { sendStkPush } from '@/ai/flows/send-stk-push';
-import { Loader, CreditCard, Smartphone, Wallet } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Loader, CreditCard, Smartphone } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useBilling } from '@/hooks/use-billing';
+import { format } from 'date-fns';
 
 function PayPalIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
@@ -39,13 +41,37 @@ function PayPalIcon(props: React.SVGProps<SVGSVGElement>) {
 
 export default function BillingPage() {
   const { toast } = useToast();
-  const [amount, setAmount] = useState('');
+  const { balance, dueDate, makePayment } = useBilling();
+  const [paymentAmount, setPaymentAmount] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const handleGenericPayment = (amount: number, method: string) => {
+    setLoading(true);
+    // Simulate API call delay
+    setTimeout(() => {
+        try {
+            makePayment(amount);
+            toast({
+                title: 'Payment Successful',
+                description: `Your ${method} payment of KES ${amount} has been processed.`,
+            });
+            setPaymentAmount('');
+        } catch (error: any) {
+             toast({
+                title: 'Payment Failed',
+                description: error.message,
+                variant: 'destructive',
+            });
+        } finally {
+            setLoading(false);
+        }
+    }, 1500)
+  }
+
   const handleMobileMoneyPayment = async () => {
-    const numericAmount = Number(amount);
-    if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
+    const numericAmount = Number(paymentAmount);
+    if (!paymentAmount || isNaN(numericAmount) || numericAmount <= 0) {
       toast({
         title: 'Invalid Amount',
         description: 'Please enter a valid amount to pay.',
@@ -64,13 +90,16 @@ export default function BillingPage() {
 
     setLoading(true);
     try {
+      // Simulate STK Push
       const result = await sendStkPush({ phone, amount: numericAmount });
       if (result.success) {
+        // On "successful" push, process the payment
+        makePayment(numericAmount);
         toast({
-          title: 'STK Push Sent',
-          description: result.message,
+          title: 'STK Push Sent & Payment Processed',
+          description: `Payment of KES ${numericAmount} successful. Your balance has been updated.`,
         });
-        setAmount('');
+        setPaymentAmount('');
         setPhone('');
       } else {
         toast({
@@ -92,27 +121,21 @@ export default function BillingPage() {
   };
 
   const handleCardPayment = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-        toast({
-            title: 'Payment Successful',
-            description: 'Your card payment has been processed.',
-        });
-        setLoading(false);
-    }, 1500)
+    const numericAmount = Number(paymentAmount);
+    if (!paymentAmount || isNaN(numericAmount) || numericAmount <= 0) {
+      toast({ title: 'Invalid Amount', description: 'Please enter a valid amount.', variant: 'destructive' });
+      return;
+    }
+    handleGenericPayment(numericAmount, 'card');
   }
   
   const handlePayPalPayment = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-        toast({
-            title: 'Redirecting to PayPal',
-            description: 'You are being redirected to PayPal to complete your payment.',
-        });
-        setLoading(false);
-    }, 1500)
+     const numericAmount = Number(paymentAmount);
+    if (!paymentAmount || isNaN(numericAmount) || numericAmount <= 0) {
+      toast({ title: 'Invalid Amount', description: 'Please enter a valid amount.', variant: 'destructive' });
+      return;
+    }
+    handleGenericPayment(numericAmount, 'PayPal');
   }
 
   return (
@@ -130,15 +153,28 @@ export default function BillingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Current Balance</p>
-              <p className="text-3xl font-bold">KES 2,550.00</p>
+              <p className="text-3xl font-bold">KES {balance.toFixed(2)}</p>
             </div>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Next Due Date</p>
-              <p className="text-3xl font-bold">July 30, 2024</p>
+              <p className="text-3xl font-bold">{format(dueDate, 'MMMM dd, yyyy')}</p>
             </div>
         </div>
         
         <Separator />
+
+        <div className="space-y-2">
+            <Label htmlFor="amount">Payment Amount (KES)</Label>
+            <Input 
+                id="amount" 
+                type="number" 
+                placeholder="Enter amount to pay" 
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(e.target.value)}
+                disabled={loading}
+                className="max-w-xs"
+            />
+        </div>
 
         <Tabs defaultValue="mobile-money" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -146,11 +182,12 @@ export default function BillingPage() {
             <TabsTrigger value="card"><CreditCard className="mr-2" /> Card</TabsTrigger>
             <TabsTrigger value="paypal"><PayPalIcon className="mr-2" /> PayPal</TabsTrigger>
           </TabsList>
+
           <TabsContent value="mobile-money" className="mt-6">
-            <div className="space-y-4">
+            <div className="space-y-4 max-w-md">
                 <h3 className="text-lg font-medium">Mobile Money Payment</h3>
                 <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
+                    <Label htmlFor="phone">Phone Number for STK Push</Label>
                     <Input 
                         id="phone" 
                         type="tel" 
@@ -160,26 +197,14 @@ export default function BillingPage() {
                         disabled={loading}
                     />
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="amount">Payment Amount (KES)</Label>
-                    <Input 
-                        id="amount" 
-                        type="number" 
-                        placeholder="Enter amount" 
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        disabled={loading}
-                    />
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2">
-                    <Button className="w-full sm:w-auto" onClick={handleMobileMoneyPayment} disabled={loading}>
-                        {loading ? <Loader className="animate-spin" /> : 'Send Payment Prompt'}
-                    </Button>
-                </div>
+                <Button className="w-full sm:w-auto" onClick={handleMobileMoneyPayment} disabled={loading || !paymentAmount}>
+                    {loading ? <Loader className="animate-spin" /> : 'Send Payment Prompt'}
+                </Button>
             </div>
           </TabsContent>
+
           <TabsContent value="card" className="mt-6">
-            <div className="space-y-4">
+            <div className="space-y-4 max-w-md">
                 <h3 className="text-lg font-medium">Credit/Debit Card Payment</h3>
                 <div className="space-y-2">
                     <Label htmlFor="card-number">Card Number</Label>
@@ -195,24 +220,17 @@ export default function BillingPage() {
                         <Input id="cvc" placeholder="123" disabled={loading} />
                     </div>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="card-amount">Amount (KES)</Label>
-                    <Input id="card-amount" type="number" placeholder="Enter amount" disabled={loading} />
-                </div>
-                <Button className="w-full sm:w-auto" onClick={handleCardPayment} disabled={loading}>
-                     {loading ? <Loader className="animate-spin" /> : 'Pay Now'}
+                <Button className="w-full sm:w-auto" onClick={handleCardPayment} disabled={loading || !paymentAmount}>
+                     {loading ? <Loader className="animate-spin" /> : 'Pay with Card'}
                 </Button>
             </div>
           </TabsContent>
+
           <TabsContent value="paypal" className="mt-6">
-             <div className="space-y-4 text-center">
+             <div className="space-y-4 text-center max-w-md mx-auto">
                 <h3 className="text-lg font-medium">Pay with PayPal</h3>
                 <p className="text-muted-foreground">You will be redirected to PayPal to complete your payment securely.</p>
-                <div className="space-y-2">
-                    <Label htmlFor="paypal-amount">Amount (KES)</Label>
-                    <Input id="paypal-amount" type="number" placeholder="Enter amount" className="max-w-xs mx-auto" disabled={loading} />
-                </div>
-                <Button className="w-full sm:w-auto" onClick={handlePayPalPayment} disabled={loading}>
+                <Button className="w-full sm:w-auto" onClick={handlePayPalPayment} disabled={loading || !paymentAmount}>
                     {loading ? <Loader className="animate-spin" /> : <><PayPalIcon className="mr-2"/> Proceed to PayPal</>}
                 </Button>
             </div>
@@ -230,4 +248,3 @@ export default function BillingPage() {
     </div>
   );
 }
-
