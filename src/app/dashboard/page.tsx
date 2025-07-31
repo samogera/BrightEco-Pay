@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { DateRange } from "react-day-picker"
-import { addDays, format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subWeeks, subMonths, subYears, addWeeks, addMonths, addYears } from 'date-fns';
+import { addDays, format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, differenceInDays, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from 'date-fns';
 
 
 import {
@@ -29,7 +29,6 @@ import { EnergyUsageChart } from '@/components/dashboard/EnergyUsageChart';
 import { Button } from '@/components/ui/button';
 import { useBilling } from '@/hooks/use-billing';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { useState, useMemo, useEffect } from 'react';
@@ -85,68 +84,98 @@ function GracePeriodAlert() {
   );
 }
 
-// MOCK DATA
-const hourlyData = Array.from({ length: 24 }, (_, i) => ({ time: `${i}:00`, usage: Math.floor(Math.random() * (i > 5 && i < 22 ? 150 : 30)) + 10 }));
-const weeklyData = Array.from({ length: 7 }, (_, i) => ({ day: format(subDays(new Date(), i), 'EEE'), usage: Math.floor(Math.random() * 8) + 4 }));
-const monthlyData = Array.from({ length: 4 }, (_, i) => ({ week: `Week ${i + 1}`, usage: Math.floor(Math.random() * 50) + 25 }));
-const yearlyData = Array.from({ length: 12 }, (_, i) => ({ month: format(subMonths(new Date(), i), 'MMM'), usage: Math.floor(Math.random() * 300) + 150 }));
+
+// --- DYNAMIC MOCK DATA GENERATION ---
+const generateChartData = (range: DateRange | undefined) => {
+    if (!range?.from) {
+        return { data: [], dataKey: 'time', unit: 'Wh' };
+    }
+
+    const from = range.from;
+    const to = range.to || range.from;
+    const days = differenceInDays(to, from);
+
+    if (days === 0) { // Hourly view
+        const data = Array.from({ length: 24 }, (_, i) => ({ 
+            time: `${i}:00`, 
+            usage: Math.floor(Math.random() * (i > 5 && i < 22 ? 150 : 30)) + 10 
+        }));
+        return { data, dataKey: 'time', unit: 'Wh' };
+    }
+
+    if (days > 0 && days <= 14) { // Daily view
+        const data = eachDayOfInterval({ start: from, end: to }).map(day => ({
+            day: format(day, 'MMM d'),
+            usage: Math.floor(Math.random() * 8) + 4
+        }));
+        return { data, dataKey: 'day', unit: 'kWh' };
+    }
+
+    if (days > 14 && days <= 90) { // Weekly view
+        const data = eachWeekOfInterval({ start: from, end: to }, { weekStartsOn: 1 }).map((week, i) => ({
+            week: `Week ${i + 1}`,
+            usage: Math.floor(Math.random() * 50) + 25
+        }));
+        return { data, dataKey: 'week', unit: 'kWh' };
+    }
+
+    // Monthly view
+    const data = eachMonthOfInterval({ start: from, end: to }).map(month => ({
+        month: format(month, 'MMM yyyy'),
+        usage: Math.floor(Math.random() * 300) + 150
+    }));
+    return { data, dataKey: 'month', unit: 'kWh' };
+};
 
 
-type TimeRange = 'Day' | 'Week' | 'Month' | 'Year';
+type TimeRangePreset = 'Day' | 'Week' | 'Month' | 'Year';
 
 export default function DashboardPage() {
   const { balance, dueDate } = useBilling();
-  const [activeRange, setActiveRange] = useState<TimeRange>('Day');
+  const [activePreset, setActivePreset] = useState<TimeRangePreset>('Day');
+  
   const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(),
     to: new Date(),
-  })
-  const [chartData, setChartData] = useState<any[]>(hourlyData);
-  const [dataKey, setDataKey] = useState('time');
+  });
 
+  const { data: chartData, dataKey, unit } = useMemo(() => generateChartData(date), [date]);
 
   useEffect(() => {
-    switch (activeRange) {
+    // When a preset is clicked, update the date range
+    let newDate: DateRange | undefined;
+    const today = new Date();
+    switch (activePreset) {
         case 'Day':
-            setDataKey('time');
-            setChartData(hourlyData);
-            setDate({ from: new Date(), to: new Date() });
+            newDate = { from: today, to: today };
             break;
         case 'Week':
-            setDataKey('day');
-            setChartData(weeklyData.reverse());
-            setDate({ from: startOfWeek(new Date()), to: endOfWeek(new Date()) });
+            newDate = { from: startOfWeek(today), to: endOfWeek(today) };
             break;
         case 'Month':
-            setDataKey('week');
-            setChartData(monthlyData);
-            setDate({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) });
+            newDate = { from: startOfMonth(today), to: endOfMonth(today) };
             break;
         case 'Year':
-            setDataKey('month');
-            setChartData(yearlyData.reverse());
-            setDate({ from: startOfYear(new Date()), to: endOfYear(new Date()) });
+            newDate = { from: startOfYear(today), to: endOfYear(today) };
             break;
     }
-  }, [activeRange]);
+    setDate(newDate);
+  }, [activePreset]);
 
   const displayedDate = useMemo(() => {
     if (!date?.from) {
       return 'Select a date range';
     }
-    if (activeRange === 'Day') {
-        return format(date.from, 'MMMM dd, yyyy');
-    }
      if (!date.to || format(date.from, 'PPP') === format(date.to, 'PPP')) {
       return format(date.from, 'MMMM dd, yyyy');
     }
     return `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}`;
-  }, [date, activeRange]);
+  }, [date]);
 
 
   const handleDownload = (formatType: 'pdf' | 'csv') => {
     // In a real app, this would be a more sophisticated report
-    const headers = ['Period', 'Usage (kWh)'];
+    const headers = [dataKey.charAt(0).toUpperCase() + dataKey.slice(1), `Usage (${unit})`];
     const rows = chartData.map(item => [item[dataKey], item.usage]);
     
     let reportContent = `BrightEco Usage Report\nDate Range: ${displayedDate}\n\n`;
@@ -176,26 +205,26 @@ export default function DashboardPage() {
   };
   
   const handleDateNav = (direction: 'prev' | 'next') => {
-    if(!date?.from) return;
+    if(!date?.from || !date?.to) return;
     const d = direction === 'prev' ? -1 : 1;
+    const diff = differenceInDays(date.to, date.from);
 
-     switch (activeRange) {
-        case 'Day':
-            setDate({ from: addDays(date.from, d), to: addDays(date.from, d) });
-            break;
-        case 'Week':
-            const newWeekStart = addWeeks(date.from, d);
-            setDate({ from: startOfWeek(newWeekStart), to: endOfWeek(newWeekStart) });
-            break;
-        case 'Month':
-             const newMonthStart = addMonths(date.from, d);
-             setDate({ from: startOfMonth(newMonthStart), to: endOfMonth(newMonthStart) });
-            break;
-        case 'Year':
-            const newYearStart = addYears(date.from, d);
-            setDate({ from: startOfYear(newYearStart), to: endOfYear(newYearStart) });
-            break;
+    let newFrom, newTo;
+
+    if (diff === 0) { // Day
+        newFrom = addDays(date.from, d);
+        newTo = newFrom;
+    } else if (diff <= 7) { // Week
+        newFrom = addDays(date.from, d * 7);
+        newTo = addDays(date.to, d * 7);
+    } else if (diff <= 31) { // Month
+        newFrom = addDays(date.from, d * 30);
+        newTo = addDays(date.to, d * 30);
+    } else { // Year
+         newFrom = addDays(date.from, d * 365);
+         newTo = addDays(date.to, d * 365);
     }
+    setDate({ from: newFrom, to: newTo });
   }
   
   return (
@@ -239,12 +268,12 @@ export default function DashboardPage() {
 
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-1 rounded-md bg-muted p-1">
-                            {(['Day', 'Week', 'Month', 'Year'] as TimeRange[]).map(range => (
+                            {(['Day', 'Week', 'Month', 'Year'] as TimeRangePreset[]).map(range => (
                                 <Button 
                                     key={range} 
-                                    variant={activeRange === range ? 'default' : 'ghost'} 
+                                    variant={activePreset === range ? 'default' : 'ghost'} 
                                     size="sm" 
-                                    onClick={() => setActiveRange(range)}
+                                    onClick={() => setActivePreset(range)}
                                     className="h-8 px-3"
                                 >
                                     {range}
@@ -257,9 +286,9 @@ export default function DashboardPage() {
                             </Button>
                             <Popover>
                                 <PopoverTrigger asChild>
-                                <Button variant="outline" className="h-9 w-[200px] justify-start text-left font-normal">
+                                <Button variant="outline" className="h-9 w-[240px] justify-start text-left font-normal">
                                     <CalendarDays className="mr-2 h-4 w-4" />
-                                    <span>{displayedDate}</span>
+                                    <span className="truncate">{displayedDate}</span>
                                 </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
@@ -285,7 +314,7 @@ export default function DashboardPage() {
                         <EnergyUsageChart 
                             data={chartData} 
                             dataKey={dataKey} 
-                            unit={activeRange === 'Day' ? 'Wh' : 'kWh'}
+                            unit={unit}
                         />
                     </div>
 
@@ -355,3 +384,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
