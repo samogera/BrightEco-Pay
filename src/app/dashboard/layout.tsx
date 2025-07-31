@@ -15,7 +15,7 @@ import {
   Moon,
   Sun,
   Loader,
-  BookOpen,
+  Bell,
 } from 'lucide-react';
 import type {PropsWithChildren} from 'react';
 
@@ -28,6 +28,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuShortcut,
 } from '@/components/ui/dropdown-menu';
 import {
   Sidebar,
@@ -46,15 +47,23 @@ import { useTheme } from 'next-themes';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import React from 'react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 
 const menuItems = [
   {href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard},
   {href: '/dashboard/devices', label: 'Devices', icon: Smartphone},
-  {href: '/dashboard/billing', label: 'Billing', icon: CreditCard},
+  {href: ' /dashboard/billing', label: 'Billing', icon: CreditCard},
   {href: '/dashboard/profile', label: 'Profile', icon: User},
   {href: '/dashboard/support', label: 'Support', icon: LifeBuoy},
 ];
+
+const notifications = [
+    { title: "Payment Due Soon", description: "Your next payment of KES 2,550 is due in 5 days.", time: "5m ago" },
+    { title: "Device Offline", description: "Solar Panel Array B is offline. Please check connections.", time: "1h ago" },
+    { title: "Payment Received", description: "Your payment of KES 1,000 has been successfully processed.", time: "yesterday" },
+];
+
 
 export default function DashboardLayout({children}: PropsWithChildren) {
   const pathname = usePathname();
@@ -121,7 +130,7 @@ export default function DashboardLayout({children}: PropsWithChildren) {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-3 w-full p-2 rounded-md outline-none text-left text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ring-sidebar-ring focus-visible:ring-2">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.photoURL || "https://placehold.co/40x40.png"} alt={user.displayName || 'User'} data-ai-hint="user avatar" />
+                  <AvatarImage src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || user.email}&background=primary&color=primary-foreground`} alt={user.displayName || 'User'} />
                   <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
                 <span className="group-data-[collapsible=icon]:hidden font-medium truncate">
@@ -137,12 +146,15 @@ export default function DashboardLayout({children}: PropsWithChildren) {
                   <User className="mr-2" /> Profile
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2" /> Settings
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/settings">
+                  <Settings className="mr-2" /> Settings
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2" /> Logout
+                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -155,6 +167,30 @@ export default function DashboardLayout({children}: PropsWithChildren) {
           </SidebarTrigger>
           <div className="flex items-center gap-4">
              <h1 className="font-headline text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h1>
+             <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Notifications">
+                         <Bell className="h-5 w-5" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="end">
+                    <div className="p-4">
+                        <h4 className="font-medium text-sm">Notifications</h4>
+                         <div className="mt-4 space-y-4">
+                            {notifications.map((notification, index) => (
+                                <div key={index} className="grid grid-cols-[25px_1fr] items-start pb-4 last:pb-0">
+                                    <span className="flex h-2 w-2 translate-y-1.5 rounded-full bg-primary" />
+                                    <div className="grid gap-1">
+                                        <p className="font-medium text-sm">{notification.title}</p>
+                                        <p className="text-xs text-muted-foreground">{notification.description}</p>
+                                        <p className="text-xs text-muted-foreground">{notification.time}</p>
+                                    </div>
+                                </div>
+                            ))}
+                         </div>
+                    </div>
+                </PopoverContent>
+             </Popover>
               <Button
                 variant="ghost"
                 size="icon"

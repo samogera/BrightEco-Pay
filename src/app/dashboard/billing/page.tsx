@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { format } from 'date-fns';
@@ -23,6 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useBilling } from '@/hooks/use-billing';
 import { sendStkPush } from '@/ai/flows/send-stk-push';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
 
 function PayPalIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
@@ -45,7 +46,8 @@ function PayPalIcon(props: React.SVGProps<SVGSVGElement>) {
 
 export default function BillingPage() {
   const { toast } = useToast();
-  const { balance, dueDate, makePayment, addInvoice } = useBilling();
+  const { user } = useAuth();
+  const { balance, dueDate, makePayment, addInvoice, loading: billingLoading } = useBilling();
   const [paymentAmount, setPaymentAmount] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
@@ -54,6 +56,12 @@ export default function BillingPage() {
   const [expiryDate, setExpiryDate] = useState('');
   const [cvc, setCvc] = useState('');
   const [cardType, setCardType] = useState('');
+
+  useEffect(() => {
+    if (user?.phoneNumber) {
+      setPhone(user.phoneNumber);
+    }
+  }, [user]);
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const number = e.target.value.replace(/\s/g, '');
@@ -67,9 +75,9 @@ export default function BillingPage() {
     }
   }
 
-  const processPayment = (amount: number, method: string, details: string) => {
-    makePayment(amount);
-    addInvoice({
+  const processPayment = async (amount: number, method: string, details: string) => {
+    await makePayment(amount);
+    await addInvoice({
         id: `INV-${Date.now()}`,
         amount,
         date: new Date(),
@@ -107,7 +115,7 @@ export default function BillingPage() {
     try {
       const result = await sendStkPush({ phone, amount: numericAmount });
       if (result.success) {
-        processPayment(numericAmount, 'M-Pesa', `STK Push to ${phone}`);
+        await processPayment(numericAmount, 'M-Pesa', `STK Push to ${phone}`);
         setPhone('');
       } else {
         toast({
@@ -128,7 +136,7 @@ export default function BillingPage() {
     }
   };
 
-  const handleCardPayment = () => {
+  const handleCardPayment = async () => {
     const numericAmount = Number(paymentAmount);
     if (!paymentAmount || isNaN(numericAmount) || numericAmount <= 0) {
       toast({ title: 'Invalid Amount', description: 'Please enter a valid amount.', variant: 'destructive' });
@@ -151,24 +159,23 @@ export default function BillingPage() {
 
     setLoading(true);
     // Simulate API call delay
-    setTimeout(() => {
-        try {
-            const last4 = cardNumber.slice(-4);
-            processPayment(numericAmount, 'Card', `Card ending in ${last4}`);
-            setCardNumber('');
-            setExpiryDate('');
-            setCvc('');
-            setCardType('');
-        } catch (error: any) {
-             toast({
-                title: 'Payment Failed',
-                description: error.message,
-                variant: 'destructive',
-            });
-        } finally {
-            setLoading(false);
-        }
-    }, 1500)
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+        const last4 = cardNumber.slice(-4);
+        await processPayment(numericAmount, 'Card', `Card ending in ${last4}`);
+        setCardNumber('');
+        setExpiryDate('');
+        setCvc('');
+        setCardType('');
+    } catch (error: any) {
+         toast({
+            title: 'Payment Failed',
+            description: error.message,
+            variant: 'destructive',
+        });
+    } finally {
+        setLoading(false);
+    }
   }
   
   const handlePayPalPayment = () => {
@@ -178,14 +185,14 @@ export default function BillingPage() {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+    setTimeout(async () => {
         toast({
             title: 'Redirecting to PayPal...',
             description: 'You are being redirected to complete your payment securely.'
         });
         // In a real app, this would be a window.location.href change
         console.log("Redirecting to PayPal for payment of KES", numericAmount);
-        processPayment(numericAmount, 'PayPal', 'Transaction via PayPal');
+        await processPayment(numericAmount, 'PayPal', 'Transaction via PayPal');
         setLoading(false);
     }, 1500)
   }
@@ -202,6 +209,12 @@ export default function BillingPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {billingLoading ? (
+            <div className="flex justify-center items-center h-48">
+                <Loader className="animate-spin text-primary" />
+            </div>
+        ) : (
+        <>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Current Balance</p>
@@ -209,7 +222,7 @@ export default function BillingPage() {
             </div>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Next Due Date</p>
-              <p className="text-3xl font-bold">{format(dueDate, 'MMMM dd, yyyy')}</p>
+              <p className="text-3xl font-bold">{dueDate ? format(dueDate, 'MMMM dd, yyyy') : 'N/A'}</p>
             </div>
         </div>
         
@@ -303,6 +316,8 @@ export default function BillingPage() {
               <Link href="/dashboard/billing/history">View Payment History</Link>
             </Button>
          </div>
+         </>
+        )}
       </CardContent>
     </Card>
     </div>

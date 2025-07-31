@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState, useCallback } from 'react';
 import {
   AuthContext
 } from '@/components/shared/AuthProvider';
@@ -17,42 +17,72 @@ import {
     onAuthStateChanged,
 } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
+
+export interface UserData {
+  address?: string;
+}
 
 export const useAuth = () => {
   const { auth, user, setUser, loading } = useContext(AuthContext);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
+    if (!user) {
+      setUserData(null);
+      return;
+    }
+    
+    const db = getFirestore(app);
+    const userDocRef = doc(db, 'users', user.uid);
+
+    const unsubscribe = onSnapshot(userDocRef, (doc) => {
+      if (doc.exists()) {
+        setUserData(doc.data() as UserData);
       } else {
-        setUser(null);
+        // Handle case where user exists in Auth but not in Firestore
+        setUserData(null);
       }
     });
-    return () => unsubscribe();
-  }, [auth, setUser]);
 
+    return () => unsubscribe();
+  }, [user]);
+
+  const updateUserData = useCallback(async (data: Partial<UserData>) => {
+    if (!user) throw new Error("No user is signed in.");
+    const db = getFirestore(app);
+    const userDocRef = doc(db, 'users', user.uid);
+    await setDoc(userDocRef, data, { merge: true });
+  }, [user]);
 
   const signInWithEmail = (email: string, pass: string) => {
     return signInWithEmailAndPassword(auth, email, pass);
   };
 
-  const signUpWithEmail = (email: string, pass: string) => {
-    return createUserWithEmailAndPassword(auth, email, pass);
+  const signUpWithEmail = async (email: string, pass: string) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateUserData({}); // Create an empty user document in Firestore
+    return userCredential;
   };
 
-  const signInWithGoogle = () => {
+  const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    return signInWithPopup(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    const db = getFirestore(app);
+    const userDocRef = doc(db, 'users', result.user.uid);
+    const userDoc = await getDoc(userDocRef);
+    if (!userDoc.exists()) {
+      await updateUserData({});
+    }
+    return result;
   };
   
   const setupRecaptcha = (containerId: string) => {
     if (typeof window !== 'undefined') {
-        const verifierId = `recaptcha-verifier-${containerId}`;
-        // Avoid re-creating the verifier if it already exists.
+        // Destroy the old verifier if it exists
         if ((window as any).recaptchaVerifier) {
-            return (window as any).recaptchaVerifier;
+            (window as any).recaptchaVerifier.clear();
         }
 
         (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
@@ -63,9 +93,7 @@ export const useAuth = () => {
             'expired-callback': () => {
                 console.error("reCAPTCHA expired, please try again.");
                 if((window as any).recaptchaVerifier) {
-                    (window as any).recaptchaVerifier.render().then((widgetId: any) => {
-                        (window as any).recaptchaVerifier.reset(widgetId);
-                    });
+                   (window as any).recaptchaVerifier.render().catch((err: any) => console.error("Recaptcha rerender failed", err));
                 }
             }
         });
@@ -89,8 +117,7 @@ export const useAuth = () => {
   const updateUserProfile = async (profile: { displayName?: string, photoURL?: string }) => {
     if (auth.currentUser) {
         await updateProfile(auth.currentUser, profile);
-        // Manually create a new user object to ensure re-render
-        const updatedUser = { ...auth.currentUser };
+        const updatedUser = Object.assign(Object.create(Object.getPrototypeOf(auth.currentUser)), auth.currentUser);
         setUser(updatedUser);
         return auth.currentUser;
     }
@@ -103,7 +130,7 @@ export const useAuth = () => {
       const storageRef = ref(storage, `avatars/${auth.currentUser.uid}/${file.name}`);
       const snapshot = await uploadBytes(storageRef, file);
       const photoURL = await getDownloadURL(snapshot.ref);
-      await updateUserProfile({ photoURL }); // Update profile with new URL
+      await updateUserProfile({ photoURL });
       return photoURL;
     }
     throw new Error("No user is signed in.");
@@ -111,7 +138,8 @@ export const useAuth = () => {
 
   return { 
     user, 
-    loading, 
+    loading,
+    userData, 
     signInWithEmail, 
     signUpWithEmail, 
     signInWithGoogle, 
@@ -119,5 +147,6 @@ export const useAuth = () => {
     signOut,
     updateUserProfile,
     updateUserAvatar,
+    updateUserData,
     };
 };

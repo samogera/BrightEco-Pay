@@ -14,12 +14,12 @@ import { useAuth } from '@/hooks/use-auth';
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  const { user, loading: authLoading, updateUserProfile, updateUserAvatar } = useAuth();
+  const { user, loading: authLoading, updateUserProfile, updateUserAvatar, updateUserData, userData } = useAuth();
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('123 Solar Lane, Nairobi');
+  const [address, setAddress] = useState('');
   
   const [avatarPreview, setAvatarPreview] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -32,10 +32,13 @@ export default function ProfilePage() {
     if (user) {
         setName(user.displayName || '');
         setEmail(user.email || '');
-        setPhone(user.phoneNumber || '+254712345678'); // Default if not set
-        setAvatarPreview(user.photoURL || `https://placehold.co/100x100.png?text=${(user.displayName || user.email || 'U').charAt(0)}`);
+        setPhone(user.phoneNumber || '');
+        setAvatarPreview(user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || user.email}&background=primary&color=primary-foreground`);
     }
-  }, [user]);
+    if (userData) {
+      setAddress(userData.address || '');
+    }
+  }, [user, userData]);
 
   const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +51,10 @@ export default function ProfilePage() {
         
         if (name !== user?.displayName) {
             await updateUserProfile({ displayName: name });
+        }
+
+        if (address !== userData?.address) {
+          await updateUserData({ address });
         }
         
       toast({
@@ -139,14 +146,14 @@ export default function ProfilePage() {
                     <Label htmlFor="phone">Phone Number</Label>
                     <div className="flex items-center gap-2">
                         <Phone className="text-muted-foreground" />
-                        <Input id="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} disabled />
+                        <Input id="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} disabled={!user?.providerData.some(p => p.providerId === 'phone')} />
                     </div>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="address">Physical Address</Label>
                     <div className="flex items-center gap-2">
                         <MapPin className="text-muted-foreground" />
-                        <Input id="address" value={address} onChange={e => setAddress(e.target.value)} disabled={loading} />
+                        <Input id="address" value={address} onChange={e => setAddress(e.target.value)} disabled={loading} placeholder="e.g. 123 Solar Lane, Nairobi"/>
                     </div>
                 </div>
             </div>
