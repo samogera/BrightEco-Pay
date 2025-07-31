@@ -2,67 +2,81 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, Zap, Lightbulb, Tv, Smartphone, Refrigerator, RefreshCcw, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { Separator } from '../ui/separator';
+import { TrendingUp, Zap, Lightbulb, Tv, Smartphone, Refrigerator, RefreshCcw, ArrowRight, CheckCircle, Fan, Router, Laptop } from 'lucide-react';
 import Link from 'next/link';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { cn } from '@/lib/utils';
-
-// Simplified recommendation logic
-const recommendations = {
-  'lights-only_less-than-4': { kit: '50W Basic', payment: 850, coverage: '4+ hours of lighting and phone charging.' },
-  'lights-only_4-8': { kit: '80W Basic', payment: 1100, coverage: '8+ hours of lighting and phone charging.' },
-  'lights-only_8+': { kit: '100W Standard', payment: 1500, coverage: 'All-night lighting, plus TV and phone charging.' },
-  'lights-tv-phone_less-than-4': { kit: '100W Standard', payment: 1500, coverage: 'Powers lights, TV, and phones for over 4 hours.' },
-  'lights-tv-phone_4-8': { kit: '150W Standard', payment: 2200, coverage: 'Powers lights, TV, and phones for over 8 hours.' },
-  'lights-tv-phone_8+': { kit: '200W Plus', payment: 3000, coverage: 'Full evening power for lights, TV, phones, and a fan.' },
-  'add-fridge-fan_less-than-4': { kit: '250W Plus', payment: 3800, coverage: 'Supports essential appliances and a small fridge.' },
-  'add-fridge-fan_4-8': { kit: '300W Premium', payment: 4500, coverage: 'Reliable power for a small fridge, TV, and more.' },
-  'add-fridge-fan_8+': { kit: '400W Premium', payment: 5500, coverage: 'Powers multiple appliances including a fridge, all day.' },
-  'full-home_less-than-4': { kit: '400W Premium', payment: 5500, coverage: 'Complete home power for moderate usage.' },
-  'full-home_4-8': { kit: '500W Pro', payment: 7000, coverage: 'Full home power solution for extended daily use.' },
-  'full-home_8+': { kit: '600W Pro', payment: 8500, coverage: 'Ultimate power for a fully electrified home experience.' },
-};
+import { Checkbox } from '../ui/checkbox';
+import { Separator } from '../ui/separator';
 
 const applianceOptions = [
-  { id: 'lights-only', label: 'Lights & Phone Charging', icon: Lightbulb },
-  { id: 'lights-tv-phone', label: 'Lights, TV & Phones', icon: Tv },
-  { id: 'add-fridge-fan', label: 'Add a Fridge or Fan', icon: Refrigerator },
-  { id: 'full-home', label: 'Full Home Setup', icon: Zap },
+  { id: 'lights', label: 'Lighting', icon: Lightbulb, power: 20 },
+  { id: 'tv', label: 'Television', icon: Tv, power: 100 },
+  { id: 'phone', label: 'Phone Charging', icon: Smartphone, power: 10 },
+  { id: 'fridge', label: 'Small Fridge', icon: Refrigerator, power: 150 },
+  { id: 'fan', label: 'Fan', icon: Fan, power: 60 },
+  { id: 'router', label: 'Wi-Fi Router', icon: Router, power: 15 },
+  { id: 'laptop', label: 'Laptop', icon: Laptop, power: 50 },
 ];
 
 const usageOptions = [
-  { id: 'less-than-4', label: 'Less than 4 hours' },
-  { id: '4-8', label: '4-8 hours' },
-  { id: '8+', label: '8+ hours' },
+  { id: 'low', label: '< 4 hours', hours: 3 },
+  { id: 'medium', label: '4-8 hours', hours: 6 },
+  { id: 'high', label: '8+ hours', hours: 10 },
 ];
 
-type ApplianceSetup = 'lights-only' | 'lights-tv-phone' | 'add-fridge-fan' | 'full-home';
-type UsageHours = 'less-than-4' | '4-8' | '8+';
+// Simplified recommendation logic based on total power consumption
+const getRecommendation = (totalPower: number) => {
+  if (totalPower <= 50) return { kit: '50W Basic', payment: 850, coverage: 'basic lighting and charging' };
+  if (totalPower <= 100) return { kit: '100W Standard', payment: 1500, coverage: 'lights, phone, and a small TV' };
+  if (totalPower <= 200) return { kit: '200W Plus', payment: 3000, coverage: 'TV, lights, fan, and multiple devices' };
+  if (totalPower <= 350) return { kit: '350W Premium', payment: 4800, coverage: 'powering small fridges and more' };
+  if (totalPower <= 500) return { kit: '500W Pro', payment: 7000, coverage: 'a complete home power solution' };
+  return { kit: '600W+ Pro', payment: 8500, coverage: 'heavy usage and multiple large appliances' };
+};
 
+type UsageHours = 'low' | 'medium' | 'high';
 
 export function SolarSavingsCalculator() {
-  const [applianceSetup, setApplianceSetup] = useState<ApplianceSetup | null>(null);
+  const [selectedAppliances, setSelectedAppliances] = useState<string[]>([]);
   const [usageHours, setUsageHours] = useState<UsageHours | null>(null);
   const [showResults, setShowResults] = useState(false);
 
+  const handleApplianceChange = (applianceId: string) => {
+    setSelectedAppliances(prev =>
+      prev.includes(applianceId)
+        ? prev.filter(id => id !== applianceId)
+        : [...prev, applianceId]
+    );
+  };
+
+  const totalPowerConsumption = useMemo(() => {
+    const selectedPower = selectedAppliances.reduce((total, id) => {
+      const appliance = applianceOptions.find(a => a.id === id);
+      return total + (appliance?.power || 0);
+    }, 0);
+    
+    const usageMultiplier = usageHours ? usageOptions.find(u => u.id === usageHours)!.hours / 6 : 1;
+    
+    return selectedPower * usageMultiplier;
+  }, [selectedAppliances, usageHours]);
+
   const result = useMemo(() => {
-    if (!applianceSetup || !usageHours) return null;
-    const key = `${applianceSetup}_${usageHours}` as keyof typeof recommendations;
-    return recommendations[key];
-  }, [applianceSetup, usageHours]);
+    if (!selectedAppliances.length || !usageHours) return null;
+    return getRecommendation(totalPowerConsumption);
+  }, [totalPowerConsumption, selectedAppliances, usageHours]);
 
   const handleCalculate = () => {
-    if (applianceSetup && usageHours) {
+    if (selectedAppliances.length > 0 && usageHours) {
       setShowResults(true);
     }
   };
   
   const handleReset = () => {
-    setApplianceSetup(null);
+    setSelectedAppliances([]);
     setUsageHours(null);
     setShowResults(false);
   }
@@ -78,85 +92,94 @@ export function SolarSavingsCalculator() {
             </p>
         </div>
 
-        <Card className="bg-card/90 backdrop-blur-sm p-4 md:p-8 border-primary/20 shadow-lg">
-            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-                <div className="space-y-8">
-                    <div>
-                        <Label className="text-base font-medium block mb-4">
-                            1. What appliances do you want to power?
-                        </Label>
-                        <RadioGroup value={applianceSetup || ''} onValueChange={(value: ApplianceSetup) => setApplianceSetup(value)} className="grid grid-cols-2 gap-4">
-                          {applianceOptions.map((opt) => (
-                            <Label key={opt.id} htmlFor={opt.id} className={cn(
-                              "flex flex-col items-center justify-center gap-2 rounded-lg border-2 p-4 cursor-pointer transition-all hover:bg-accent/50",
-                              applianceSetup === opt.id && "border-primary bg-primary/10 text-primary"
-                            )}>
-                              <opt.icon className="h-8 w-8" />
-                              <span className="text-center font-semibold text-sm">{opt.label}</span>
-                              <RadioGroupItem value={opt.id} id={opt.id} className="sr-only" />
+        <Card className="bg-card/90 backdrop-blur-sm p-6 md:p-10 border-primary/20 shadow-lg">
+            {!showResults ? (
+                 <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+                    <div className="space-y-8">
+                        <div>
+                            <Label className="text-base font-medium block mb-4">
+                                What appliances do you want to power?
                             </Label>
-                          ))}
-                        </RadioGroup>
-                    </div>
-                     <div>
-                        <Label className="text-base font-medium block mb-4">
-                           2. How many hours per day do you need power?
-                        </Label>
-                         <RadioGroup value={usageHours || ''} onValueChange={(value: UsageHours) => setUsageHours(value)} className="flex gap-4">
-                          {usageOptions.map(opt => (
-                            <Label key={opt.id} htmlFor={opt.id} className={cn(
-                              "flex-1 text-center rounded-lg border-2 p-4 cursor-pointer transition-all hover:bg-accent/50",
-                              usageHours === opt.id && "border-primary bg-primary/10 text-primary"
-                            )}>
-                              <span className="font-semibold">{opt.label}</span>
-                              <RadioGroupItem value={opt.id} id={opt.id} className="sr-only" />
-                            </Label>
-                          ))}
-                        </RadioGroup>
-                    </div>
-                </div>
-
-                <div className="text-center rounded-2xl bg-muted/50 p-8">
-                    {showResults && result ? (
-                        <div className="space-y-4">
-                           <h3 className="font-headline text-xl text-primary">Your Recommended Plan</h3>
-                           <div className="bg-primary text-primary-foreground rounded-lg p-4">
-                                <p className="text-lg">Recommended Kit</p>
-                                <p className="text-4xl font-bold">{result.kit}</p>
-                           </div>
-                           <div className="grid grid-cols-2 gap-4 text-left">
-                                <div className="bg-card p-3 rounded-md">
-                                    <p className="text-sm text-muted-foreground">Est. Monthly Payment</p>
-                                    <p className="text-xl font-bold">KES {result.payment.toLocaleString()}</p>
-                                </div>
-                                 <div className="bg-card p-3 rounded-md">
-                                    <p className="text-sm text-muted-foreground">Energy Coverage</p>
-                                    <p className="text-md font-bold">{result.coverage}</p>
-                                </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {applianceOptions.map((opt) => (
+                                <Label key={opt.id} htmlFor={opt.id} className={cn(
+                                "flex items-center gap-2 rounded-lg border-2 p-3 cursor-pointer transition-all hover:border-primary/80 hover:bg-accent/50",
+                                selectedAppliances.includes(opt.id) && "border-primary bg-primary/10 text-primary"
+                                )}>
+                                <Checkbox id={opt.id} checked={selectedAppliances.includes(opt.id)} onCheckedChange={() => handleApplianceChange(opt.id)} className="h-5 w-5"/>
+                                <opt.icon className="h-5 w-5" />
+                                <span className="font-semibold text-sm">{opt.label}</span>
+                                </Label>
+                            ))}
                             </div>
-                             <Button onClick={handleReset} size="sm" variant="ghost">
-                                <RefreshCcw className="mr-2 h-4 w-4"/> Reset Calculator
+                        </div>
+                        <div>
+                            <Label className="text-base font-medium block mb-4">
+                            How many hours per day do you need power?
+                            </Label>
+                            <RadioGroup value={usageHours || ''} onValueChange={(value: UsageHours) => setUsageHours(value)} className="flex flex-col sm:flex-row gap-3">
+                            {usageOptions.map(opt => (
+                                <Label key={opt.id} htmlFor={opt.id} className={cn(
+                                "flex-1 text-center rounded-lg border-2 p-4 cursor-pointer transition-all hover:bg-accent/50",
+                                usageHours === opt.id && "border-primary bg-primary/10 text-primary"
+                                )}>
+                                <span className="font-semibold">{opt.label}</span>
+                                <RadioGroupItem value={opt.id} id={opt.id} className="sr-only" />
+                                </Label>
+                            ))}
+                            </RadioGroup>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-center rounded-2xl bg-muted/50 p-8">
+                        <div className="text-center space-y-4">
+                             <TrendingUp className="mx-auto h-12 w-12 text-primary" />
+                            <h3 className="text-xl font-headline">Your Recommendation Awaits</h3>
+                            <p className="text-muted-foreground">Select your needs on the left to get a personalized solar plan.</p>
+                            <Button onClick={handleCalculate} size="lg" disabled={!selectedAppliances.length || !usageHours} className="w-full">
+                                <CheckCircle className="mr-2" /> Calculate My Plan
                             </Button>
                         </div>
-                    ) : (
-                         <div className="flex flex-col items-center justify-center h-full min-h-[200px] space-y-4">
-                            <p className="text-muted-foreground text-center">Your personalized recommendation will appear here.</p>
-                             <Button onClick={handleCalculate} size="lg" disabled={!applianceSetup || !usageHours}>
-                                <CheckCircle2 className="mr-2" /> Show My Plan
-                            </Button>
-                         </div>
-                    )}
+                    </div>
                 </div>
-            </div>
-             {showResults && (
-                <div className="mt-8 text-center border-t pt-6">
-                    <h4 className="font-headline text-lg">Ready to Get Started?</h4>
-                    <p className="text-muted-foreground mt-2">Take the next step towards reliable, clean energy for your home.</p>
-                     <Button size="lg" asChild className="mt-4">
-                        <Link href="/signup">
-                           Sign Up Now <ArrowRight className="ml-2" />
-                        </Link>
-                    </Button>
+            ) : (
+                <div className="text-center">
+                    <h3 className="text-2xl font-headline font-bold">Your Personalized Recommendation</h3>
+                    <p className="text-muted-foreground mt-2">Based on your selections, here's the ideal plan for your home.</p>
+                    <div className="grid md:grid-cols-3 gap-6 my-8 text-left">
+                        <Card className="p-6 bg-primary/5">
+                            <CardHeader className="p-0">
+                               <p className="text-sm text-muted-foreground">Recommended Kit</p>
+                               <CardTitle className="text-primary text-3xl">{result?.kit}</CardTitle>
+                            </CardHeader>
+                        </Card>
+                         <Card className="p-6 bg-muted/50">
+                            <CardHeader className="p-0">
+                               <p className="text-sm text-muted-foreground">Est. Monthly PAYG Payment</p>
+                               <CardTitle className="text-2xl">KES {result?.payment.toLocaleString()}</CardTitle>
+                            </CardHeader>
+                        </Card>
+                         <Card className="p-6 bg-muted/50">
+                            <CardHeader className="p-0">
+                               <p className="text-sm text-muted-foreground">Energy Coverage</p>
+                               <CardTitle className="text-lg">Powers {result?.coverage}</CardTitle>
+                            </CardHeader>
+                        </Card>
+                    </div>
+                     <Separator className="my-6"/>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <Button size="lg" asChild>
+                            <Link href="/signup">
+                            Get Started with this Plan <ArrowRight className="ml-2" />
+                            </Link>
+                        </Button>
+                        <Button onClick={handleReset} size="lg" variant="outline">
+                            <RefreshCcw className="mr-2 h-4 w-4"/> Start Over
+                        </Button>
+                    </div>
+                     <p className="text-xs text-muted-foreground mt-6">
+                        Disclaimer: This is an estimate based on your selections. Actual performance and costs may vary. A detailed quote will be provided after a site assessment.
+                    </p>
                 </div>
             )}
         </Card>
