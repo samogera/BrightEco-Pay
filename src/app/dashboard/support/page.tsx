@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { LifeBuoy, Phone, MessageSquare, MapPin, Loader, FileText, Send } from "lucide-react";
+import { LifeBuoy, Phone, MessageSquare, MapPin, Loader, FileText, Send, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { submitTicket } from "@/ai/flows/submit-ticket";
 import { useAuth } from "@/hooks/use-auth";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 export default function SupportPage() {
@@ -21,6 +22,8 @@ export default function SupportPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [subject, setSubject] = useState('');
+  const [customSubject, setCustomSubject] = useState('');
   
   useEffect(() => {
     if(user) {
@@ -35,11 +38,13 @@ export default function SupportPage() {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
+    const finalSubject = subject === 'other' ? customSubject : subject;
+
     const data = {
       name: name,
       email: email,
       phone: phone,
-      title: formData.get('title') as string,
+      title: finalSubject,
       message: formData.get('message') as string,
     }
 
@@ -60,11 +65,10 @@ export default function SupportPage() {
           title: "Ticket Submitted Successfully!",
           description: result.message,
         });
-        // Reset form if needed
         const form = e.target as HTMLFormElement;
         form.reset();
-        // Since name/email/phone are controlled, we don't reset them
-        // so they stay pre-filled for the next ticket.
+        setSubject('');
+        setCustomSubject('');
       } else {
          toast({
           title: "Submission Failed",
@@ -110,9 +114,33 @@ export default function SupportPage() {
                 <Input id="phone" name="phone" value={phone} onChange={e => setPhone(e.target.value)} disabled={loading} />
               </div>
                <div className="space-y-2">
-                  <Label htmlFor="title">Subject</Label>
-                  <Input id="title" name="title" placeholder="e.g., Payment Inquiry, System Offline" required disabled={loading} />
+                  <Label htmlFor="title">Reason for Contact</Label>
+                  <Select onValueChange={setSubject} value={subject} required>
+                    <SelectTrigger id="subject-select">
+                        <SelectValue placeholder="Select a reason..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Payment Inquiry">Payment Inquiry</SelectItem>
+                        <SelectItem value="Technical Support">Technical Support</SelectItem>
+                        <SelectItem value="System Offline">System Offline</SelectItem>
+                        <SelectItem value="General Question">General Question</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+                {subject === 'other' && (
+                    <div className="space-y-2">
+                        <Label htmlFor="custom-subject">Custom Subject</Label>
+                        <Input 
+                            id="custom-subject" 
+                            placeholder="Please specify your subject" 
+                            value={customSubject} 
+                            onChange={(e) => setCustomSubject(e.target.value)} 
+                            required 
+                            disabled={loading} 
+                        />
+                    </div>
+                )}
               <div className="space-y-2">
                 <Label htmlFor="message">Message</Label>
                 <Textarea id="message" name="message" placeholder="Describe your issue or request in detail..." rows={5} required disabled={loading}/>
@@ -168,7 +196,7 @@ export default function SupportPage() {
         </Card>
          <Card>
           <CardHeader>
-            <CardTitle className="font-headline text-xl flex items-center gap-2"><FileText className="text-primary" /> Self-Service</CardTitle>
+            <CardTitle className="font-headline text-xl flex items-center gap-2"><HelpCircle className="text-primary" /> Self-Service</CardTitle>
              <CardDescription>
               Find instant answers to common questions.
             </CardDescription>

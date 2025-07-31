@@ -6,27 +6,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { LifeBuoy, Phone, MessageSquare, MapPin, Loader, FileText, Send, Mail } from "lucide-react";
+import { LifeBuoy, Phone, MessageSquare, MapPin, Loader, FileText, Send, Mail, HelpCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import Link from "next/link";
 import { submitTicket } from "@/ai/flows/submit-ticket";
 import { Logo } from "@/components/shared/Logo";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ContactPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [customSubject, setCustomSubject] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
+    const finalSubject = subject === 'other' ? customSubject : subject;
+
     const data = {
       name: formData.get('name') as string,
       email: formData.get('email') as string,
       phone: formData.get('phone') as string,
-      title: formData.get('title') as string,
+      title: finalSubject,
       message: formData.get('message') as string,
     }
 
@@ -49,6 +54,8 @@ export default function ContactPage() {
         });
         const form = e.target as HTMLFormElement;
         form.reset();
+        setSubject("");
+        setCustomSubject("");
       } else {
          toast({
           title: "Submission Failed",
@@ -112,9 +119,33 @@ export default function ContactPage() {
                         <Input id="phone" name="phone" disabled={loading} placeholder="+254 712 345 678" />
                       </div>
                        <div className="space-y-2">
-                          <Label htmlFor="title">Subject</Label>
-                          <Input id="title" name="title" placeholder="e.g., Quote for a 3-bedroom house" required disabled={loading} />
+                          <Label htmlFor="title">Reason for Contact</Label>
+                           <Select onValueChange={setSubject} value={subject} required>
+                            <SelectTrigger id="subject-select">
+                                <SelectValue placeholder="Select a reason..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="General Inquiry">General Inquiry</SelectItem>
+                                <SelectItem value="Quote Request">Quote Request</SelectItem>
+                                <SelectItem value="Technical Support">Technical Support</SelectItem>
+                                <SelectItem value="Partnership">Partnership</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
+                        {subject === 'other' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="custom-subject">Custom Subject</Label>
+                                <Input 
+                                    id="custom-subject" 
+                                    placeholder="Please specify your subject" 
+                                    value={customSubject} 
+                                    onChange={(e) => setCustomSubject(e.target.value)} 
+                                    required 
+                                    disabled={loading} 
+                                />
+                            </div>
+                        )}
                       <div className="space-y-2">
                         <Label htmlFor="message">Message</Label>
                         <Textarea id="message" name="message" placeholder="Tell us about your energy needs..." rows={5} required disabled={loading}/>
@@ -128,6 +159,17 @@ export default function ContactPage() {
               </div>
 
               <div className="space-y-8 md:col-span-2">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-lg flex items-center gap-2"><HelpCircle className="text-primary"/> Looking for Answers?</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground mb-4">Check our FAQ page for quick answers to common questions.</p>
+                        <Button variant="outline" asChild>
+                            <Link href="/faq">Visit FAQ Page</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
                 <Card>
                   <CardHeader>
                     <CardTitle className="font-headline text-lg flex items-center gap-2">

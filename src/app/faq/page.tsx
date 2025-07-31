@@ -12,17 +12,18 @@ import { HelpCircle } from 'lucide-react';
 import { Logo } from '@/components/shared/Logo';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 const faqItems = [
   {
     question: 'How do I make a payment for my solar service?',
     answer:
-      'You can easily make a payment through the "Billing" section of your dashboard. We support payments via M-Pesa, Card (Visa/Mastercard), PayPal, and your Solar Wallet balance. Simply enter the amount you wish to pay and choose your preferred method.',
+      'You can easily make a payment through the "Billing" section of your dashboard. We support payments via M-Pesa, Card (Visa/Mastercard), PayPal, and your BrightEco Wallet balance. Simply enter the amount you wish to pay and choose your preferred method.',
   },
   {
-    question: 'What is the Solar Wallet and how does the discount work?',
+    question: 'What is the BrightEco Wallet and how does the discount work?',
     answer:
-      'The Solar Wallet is a feature that allows you to store credit for future payments. When you pay your bill using your Solar Wallet balance, you receive a 1.5% discount on the total amount due. You can top up your wallet at any time from the "Billing" page.',
+      'The BrightEco Wallet is a feature that allows you to store credit for future payments. When you pay your bill using your Wallet balance, you receive a 1.5% discount on the total amount due. You can top up your wallet at any time from the "Billing" page.',
   },
   {
     question: 'What happens if I miss a payment due date?',
@@ -47,13 +48,13 @@ const faqItems = [
 ];
 
 export default function FaqPage() {
+  const router = useRouter();
+
   return (
     <div className="bg-brand-gradient min-h-screen">
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <Logo />
-        <Button asChild>
-          <Link href="/">Back to Home</Link>
-        </Button>
+        <Button onClick={() => router.back()}>Back to Previous Page</Button>
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="max-w-4xl mx-auto">
