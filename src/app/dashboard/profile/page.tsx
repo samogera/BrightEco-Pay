@@ -21,7 +21,7 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   
-  const [avatarPreview, setAvatarPreview] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -33,7 +33,7 @@ export default function ProfilePage() {
         setName(user.displayName || '');
         setEmail(user.email || '');
         setPhone(user.phoneNumber || '');
-        setAvatarPreview(user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || user.email}&background=primary&color=primary-foreground`);
+        setAvatarPreview(user.photoURL);
     }
     if (userData) {
       setAddress(userData.address || '');
@@ -48,24 +48,15 @@ export default function ProfilePage() {
     try {
       let photoURL = user.photoURL;
       if (avatarFile) {
+        toast({ title: 'Uploading Avatar...', description: 'Please wait.'});
         photoURL = await updateUserAvatar(avatarFile);
         setAvatarFile(null); // Clear file after upload
       }
       
-      const profileUpdates: { displayName?: string, photoURL?: string } = {};
-      const dataUpdates: { address?: string } = {};
-
-      if (name !== user.displayName) {
-        profileUpdates.displayName = name;
-      }
-       if (photoURL !== user.photoURL) {
-        profileUpdates.photoURL = photoURL;
-      }
-      if (address !== (userData?.address || '')) {
-        dataUpdates.address = address;
-      }
-
-      await updateUserProfile(profileUpdates, dataUpdates);
+      await updateUserProfile(
+        { displayName: name, photoURL: photoURL || undefined },
+        { address: address }
+      );
         
       toast({
         title: 'Profile Updated',
@@ -93,6 +84,8 @@ export default function ProfilePage() {
   if (authLoading || !user) {
     return <div className="flex items-center justify-center h-full"><Loader className="animate-spin h-10 w-10 text-primary" /></div>
   }
+  
+  const avatarSrc = avatarPreview || `https://ui-avatars.com/api/?name=${name || email}&background=primary&color=primary-foreground`;
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8">
@@ -106,7 +99,7 @@ export default function ProfilePage() {
             <div className="flex flex-col md:flex-row items-center gap-6">
                 <div className="relative">
                   <Avatar className="h-24 w-24">
-                      <AvatarImage src={avatarPreview} alt={name} data-ai-hint="user avatar" />
+                      <AvatarImage src={avatarSrc} alt={name} data-ai-hint="user avatar" />
                       <AvatarFallback>{name?.charAt(0) || email?.charAt(0) || 'U'}</AvatarFallback>
                   </Avatar>
                   <Button 

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { Loader, CreditCard, Smartphone, Wallet, ChevronsRight } from 'lucide-react';
+import { Loader, CreditCard, Smartphone, Wallet, ChevronsRight, PlusCircle, Star } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,11 +20,21 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
-import { useBilling } from '@/hooks/use-billing';
+import { useBilling, PaymentMethod } from '@/hooks/use-billing';
 import { sendStkPush } from '@/ai/flows/send-stk-push';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotifications } from '@/hooks/use-notifications';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
 
 function PayPalIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
@@ -48,44 +58,47 @@ function PayPalIcon(props: React.SVGProps<SVGSVGElement>) {
 export default function BillingPage() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { balance, dueDate, makePayment, addInvoice, loading: billingLoading, walletBalance, addToWallet } = useBilling();
+  const { 
+      balance, 
+      dueDate, 
+      makePayment, 
+      addInvoice, 
+      loading: billingLoading, 
+      walletBalance, 
+      addToWallet,
+      paymentMethods,
+      addPaymentMethod,
+      setPreferredMethod,
+   } = useBilling();
   const { addNotification } = useNotifications();
   const [paymentAmount, setPaymentAmount] = useState('');
   const [topUpAmount, setTopUpAmount] = useState('1000');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvc, setCvc] = useState('');
-  const [cardType, setCardType] = useState('');
+  // States for Add Card Dialog
+  const [newCardNumber, setNewCardNumber] = useState('');
+  const [newCardExpiry, setNewCardExpiry] = useState('');
+  const [newCardCvc, setNewCardCvc] = useState('');
+  const [newCardHolder, setNewCardHolder] = useState('');
+  const [isAddCardDialogOpen, setIsAddCardDialogOpen] = useState(false);
+
 
   useEffect(() => {
     if (user?.phoneNumber) {
       setPhone(user.phoneNumber);
     }
+    if(user?.displayName){
+      setNewCardHolder(user.displayName);
+    }
   }, [user]);
 
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    let formattedValue = '';
-    for (let i = 0; i < value.length; i++) {
-        if (i > 0 && i % 4 === 0) {
-            formattedValue += ' ';
-        }
-        formattedValue += value[i];
-    }
-    setCardNumber(formattedValue.trim());
-
-    if (/^4/.test(value)) {
-        setCardType('visa');
-    } else if (/^5[1-5]/.test(value)) {
-        setCardType('mastercard');
-    } else {
-        setCardType('');
-    }
+  const getCardType = (cardNumber: string) => {
+    if (/^4/.test(cardNumber.replace(/\s/g, ''))) return 'visa';
+    if (/^5[1-5]/.test(cardNumber.replace(/\s/g, ''))) return 'mastercard';
+    return '';
   }
-
+  
   const processPayment = async (amount: number, method: string, details: string) => {
     setLoading(true);
     try {
@@ -145,19 +158,11 @@ export default function BillingPage() {
   const handleMobileMoneyPayment = async () => {
     const numericAmount = Number(paymentAmount);
     if (!paymentAmount || isNaN(numericAmount) || numericAmount <= 0) {
-      toast({
-        title: 'Invalid Amount',
-        description: 'Please enter a valid amount to pay.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Invalid Amount', description: 'Please enter a valid amount to pay.', variant: 'destructive'});
       return;
     }
      if (!phone || !/^\+?[1-9]\d{1,14}$/.test(phone)) {
-      toast({
-        title: 'Invalid Phone Number',
-        description: 'Please enter a valid phone number, e.g., +254712345678.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Invalid Phone Number', description: 'Please enter a valid phone number, e.g., +254712345678.', variant: 'destructive' });
       return;
     }
 
@@ -165,61 +170,31 @@ export default function BillingPage() {
     try {
       const result = await sendStkPush({ phone, amount: numericAmount });
       if (result.success) {
-        // In a real app, you'd wait for a webhook from the payment provider
-        // For this simulation, we'll process the payment immediately after the push is initiated
         await processPayment(numericAmount, 'M-Pesa', `STK Push to ${phone}`);
         setPhone('');
       } else {
-        toast({
-          title: 'M-Pesa Push Failed',
-          description: result.message || 'Could not initiate payment. Please try again.',
-          variant: 'destructive',
-        });
+        toast({ title: 'M-Pesa Push Failed', description: result.message || 'Could not initiate payment. Please try again.', variant: 'destructive' });
       }
     } catch (error) {
       console.error('STK Push Error:', error);
-      toast({
-          title: 'An Error Occurred',
-          description: 'Failed to send payment prompt. Please try again later.',
-          variant: 'destructive',
-        });
+      toast({ title: 'An Error Occurred', description: 'Failed to send payment prompt. Please try again later.', variant: 'destructive' });
     } finally {
         setLoading(false);
     }
   };
 
-  const handleCardPayment = async () => {
+  const handleCardPayment = async (method: PaymentMethod) => {
     const numericAmount = Number(paymentAmount);
     if (!paymentAmount || isNaN(numericAmount) || numericAmount <= 0) {
       toast({ title: 'Invalid Amount', description: 'Please enter a valid amount.', variant: 'destructive' });
       return;
     }
     
-    if (cardNumber.replace(/\s/g, '').length < 15 || cardNumber.replace(/\s/g, '').length > 19) {
-        toast({ title: 'Invalid Card Number', description: 'Please enter a valid card number.', variant: 'destructive' });
-        return;
-    }
-    if (!/^\d{2}\s*\/\s*\d{2}$/.test(expiryDate)) {
-        toast({ title: 'Invalid Expiry Date', description: 'Please use MM/YY format.', variant: 'destructive' });
-        return;
-    }
-     if (!/^\d{3,4}$/.test(cvc)) {
-        toast({ title: 'Invalid CVC', description: 'Please enter a valid CVC.', variant: 'destructive' });
-        return;
-    }
-    
     setLoading(true);
     // Simulate payment gateway processing time
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    const last4 = cardNumber.slice(-4);
-    await processPayment(numericAmount, 'Card', `Card ending in ${last4}`);
-    
-    // Clear card fields after successful payment
-    setCardNumber('');
-    setExpiryDate('');
-    setCvc('');
-    setCardType('');
+    await processPayment(numericAmount, method.type, `Card ending in ${method.last4}`);
     setLoading(false);
   }
   
@@ -231,10 +206,7 @@ export default function BillingPage() {
     }
     setLoading(true);
     
-    toast({
-        title: 'Redirecting to PayPal...',
-        description: 'You are being redirected to complete your payment securely.'
-    });
+    toast({ title: 'Redirecting to PayPal...', description: 'You are being redirected to complete your payment securely.' });
 
     // Simulate redirection and callback from PayPal
     setTimeout(async () => {
@@ -259,8 +231,36 @@ export default function BillingPage() {
     await processPayment(balance, 'Solar Wallet', `Discounted payment from wallet.`);
   }
 
+  const handleAddCard = async () => {
+    if (newCardNumber.replace(/\s/g, '').length < 15 || newCardNumber.replace(/\s/g, '').length > 19) {
+        toast({ title: 'Invalid Card Number', description: 'Please enter a valid card number.', variant: 'destructive' }); return;
+    }
+    if (!/^\d{2}\s*\/\s*\d{2}$/.test(newCardExpiry)) {
+        toast({ title: 'Invalid Expiry Date', description: 'Please use MM/YY format.', variant: 'destructive' }); return;
+    }
+     if (!/^\d{3,4}$/.test(newCardCvc)) {
+        toast({ title: 'Invalid CVC', description: 'Please enter a valid CVC.', variant: 'destructive' }); return;
+    }
+    if (!newCardHolder) {
+        toast({ title: 'Invalid Name', description: 'Please enter the cardholder\'s name.', variant: 'destructive' }); return;
+    }
+
+    setLoading(true);
+    await addPaymentMethod({
+      type: getCardType(newCardNumber) || 'Card',
+      last4: newCardNumber.slice(-4),
+      isPreferred: paymentMethods.length === 0,
+    });
+    setLoading(false);
+    setIsAddCardDialogOpen(false);
+    setNewCardNumber('');
+    setNewCardExpiry('');
+    setNewCardCvc('');
+    toast({ title: 'Payment Method Added', description: 'Your new card has been saved.' });
+  }
+
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8">
+    <div className="flex-1 space-y-6 p-4 md:p-8">
     <Card>
       <CardHeader>
         <CardTitle className="font-headline text-xl">
@@ -302,96 +302,53 @@ export default function BillingPage() {
         <Separator />
 
          <Tabs defaultValue="pay-bill" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="pay-bill">Pay Bill</TabsTrigger>
                 <TabsTrigger value="top-up">Top Up Wallet</TabsTrigger>
+                <TabsTrigger value="methods">My Methods</TabsTrigger>
             </TabsList>
-            <TabsContent value="pay-bill">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
+            <TabsContent value="pay-bill" className="mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
                          <h3 className="text-lg font-medium">Payment Amount</h3>
                         <div className="space-y-2">
                             <Label htmlFor="amount">Amount to Pay (KES)</Label>
-                            <Input 
-                                id="amount" 
-                                type="number" 
-                                placeholder="Enter amount" 
-                                value={paymentAmount}
-                                onChange={(e) => setPaymentAmount(e.target.value)}
-                                disabled={loading}
-                                className="max-w-xs"
-                            />
+                            <Input id="amount" type="number" placeholder="Enter amount" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} disabled={loading} className="max-w-xs" />
                         </div>
-                        <div className="space-y-2">
-                            <h3 className="text-lg font-medium mt-4">Payment Methods</h3>
-                            <Tabs defaultValue="mpesa" className="w-full max-w-sm">
-                                <TabsList className="grid w-full grid-cols-3">
-                                    <TabsTrigger value="mpesa"><Smartphone /></TabsTrigger>
-                                    <TabsTrigger value="card"><CreditCard /></TabsTrigger>
-                                    <TabsTrigger value="paypal"><PayPalIcon /></TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="mpesa" className="mt-4 space-y-4">
-                                     <div className="space-y-2">
-                                        <Label htmlFor="phone">M-Pesa Number</Label>
-                                        <Input id="phone" type="tel" placeholder="+254712345678" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={loading} />
-                                     </div>
-                                     <Button className="w-full" onClick={handleMobileMoneyPayment} disabled={loading || !paymentAmount}>
-                                        {loading ? <Loader className="animate-spin" /> : 'Pay with M-Pesa'}
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-medium mt-4">Pay With</h3>
+                             <div className="space-y-2">
+                                <Label htmlFor="phone">M-Pesa</Label>
+                                <div className="flex gap-2">
+                                    <Input id="phone" type="tel" placeholder="+254712345678" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={loading} />
+                                    <Button onClick={handleMobileMoneyPayment} disabled={loading || !paymentAmount}>
+                                        {loading ? <Loader className="animate-spin" /> : 'Pay'}
                                     </Button>
-                                </TabsContent>
-                                <TabsContent value="card" className="mt-4 space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="card-number">Card Number</Label>
-                                        <div className="relative">
-                                            <Input id="card-number" placeholder="0000 0000 0000 0000" value={cardNumber} onChange={handleCardNumberChange} disabled={loading} className="pr-24"/>
-                                            <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
-                                                <Image src="https://placehold.co/32x20.png" width={32} height={20} alt="Visa" data-ai-hint="visa logo" className={cn(cardType === 'visa' ? 'opacity-100' : 'opacity-25')} />
-                                                <Image src="https://placehold.co/32x20.png" width={32} height={20} alt="Mastercard" data-ai-hint="mastercard logo" className={cn(cardType === 'mastercard' ? 'opacity-100' : 'opacity-25')} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="expiry-date">Expiry (MM/YY)</Label>
-                                            <Input id="expiry-date" placeholder="MM / YY" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} disabled={loading}/>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="cvc">CVC</Label>
-                                            <Input id="cvc" placeholder="123" value={cvc} onChange={(e) => setCvc(e.target.value)} disabled={loading}/>
-                                        </div>
-                                    </div>
-                                     <Button className="w-full" onClick={handleCardPayment} disabled={loading || !paymentAmount}>
-                                        {loading ? <Loader className="animate-spin" /> : 'Pay with Card'}
+                                </div>
+                             </div>
+                             {paymentMethods.filter(pm => pm.type !== 'M-Pesa').map(pm => (
+                                <div key={pm.id} className="space-y-2">
+                                    <Label>{pm.type} ending in {pm.last4}</Label>
+                                     <Button className="w-full" onClick={() => handleCardPayment(pm)} disabled={loading || !paymentAmount}>
+                                        {loading ? <Loader className="animate-spin" /> : <>Pay with this {pm.type}</>}
                                     </Button>
-                                </TabsContent>
-                                <TabsContent value="paypal" className="mt-4 space-y-4">
-                                    <p className="text-sm text-muted-foreground text-center">You will be redirected to PayPal to complete your payment securely.</p>
-                                     <Button className="w-full" onClick={handlePayPalPayment} disabled={loading || !paymentAmount}>
-                                        {loading ? <Loader className="animate-spin" /> : <><PayPalIcon className="mr-2" /> Proceed to PayPal</>}
-                                    </Button>
-                                </TabsContent>
-                            </Tabs>
+                                </div>
+                             ))}
+                             <div className="space-y-2">
+                                 <Label>PayPal</Label>
+                                 <Button variant="outline" className="w-full" onClick={handlePayPalPayment} disabled={loading || !paymentAmount}>
+                                    {loading ? <Loader className="animate-spin" /> : <><PayPalIcon className="mr-2" /> Proceed to PayPal</>}
+                                </Button>
+                             </div>
                         </div>
                     </div>
                     <Card className="bg-muted/30">
-                        <CardHeader>
-                            <CardTitle>Pay with Solar Wallet</CardTitle>
-                            <CardDescription>Get a 1.5% discount when you pay your full balance from your wallet.</CardDescription>
-                        </CardHeader>
+                        <CardHeader><CardTitle>Pay with Solar Wallet</CardTitle><CardDescription>Get a 1.5% discount when you pay your full balance from your wallet.</CardDescription></CardHeader>
                         <CardContent>
-                             <div className="space-y-2">
-                                <p className="text-sm text-muted-foreground">Current Balance</p>
-                                <p className="font-bold">KES {balance.toFixed(2)}</p>
-                            </div>
-                             <div className="space-y-2 mt-2">
-                                <p className="text-sm text-muted-foreground">Discount (1.5%)</p>
-                                <p className="font-bold text-primary">- KES {(balance * 0.015).toFixed(2)}</p>
-                            </div>
+                             <div className="space-y-2"><p className="text-sm text-muted-foreground">Current Balance</p><p className="font-bold">KES {balance.toFixed(2)}</p></div>
+                             <div className="space-y-2 mt-2"><p className="text-sm text-muted-foreground">Discount (1.5%)</p><p className="font-bold text-primary">- KES {(balance * 0.015).toFixed(2)}</p></div>
                             <Separator className="my-3"/>
-                            <div className="space-y-2">
-                                <p className="text-lg text-muted-foreground">Total to Pay</p>
-                                <p className="text-2xl font-bold">KES {(balance * 0.985).toFixed(2)}</p>
-                            </div>
+                            <div className="space-y-2"><p className="text-lg text-muted-foreground">Total to Pay</p><p className="text-2xl font-bold">KES {(balance * 0.985).toFixed(2)}</p></div>
                             <Button className="w-full mt-4" onClick={handleWalletPayment} disabled={loading || walletBalance < (balance * 0.985) || balance <= 0}>
                                 {loading ? <Loader className="animate-spin" /> : 'Pay Now From Wallet'}
                             </Button>
@@ -405,18 +362,61 @@ export default function BillingPage() {
                      <p className="text-muted-foreground">Add funds to your wallet using any payment method. You can use your wallet balance to pay for your bills with a discount.</p>
                      <div className="space-y-2 text-left">
                         <Label htmlFor="top-up-amount">Amount to Add (KES)</Label>
-                        <Input 
-                            id="top-up-amount" 
-                            type="number" 
-                            value={topUpAmount}
-                            onChange={(e) => setTopUpAmount(e.target.value)}
-                            disabled={loading}
-                        />
+                        <Input id="top-up-amount" type="number" value={topUpAmount} onChange={(e) => setTopUpAmount(e.target.value)} disabled={loading} />
                     </div>
                      <Button className="w-full" disabled={loading || !topUpAmount || Number(topUpAmount) <= 0} onClick={() => processTopUp(Number(topUpAmount), 'M-Pesa/Card')}>
                         {loading ? <Loader className="animate-spin" /> : `Top Up KES ${topUpAmount}`}
                     </Button>
                 </div>
+            </TabsContent>
+            <TabsContent value="methods" className="mt-6">
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>My Payment Methods</CardTitle>
+                            <CardDescription>Add or remove your bank accounts and debit cards.</CardDescription>
+                        </div>
+                        <Dialog open={isAddCardDialogOpen} onOpenChange={setIsAddCardDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button><PlusCircle className="mr-2" /> Add New</Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader><DialogTitle>Add a new card</DialogTitle><DialogDescription>Your card information is stored securely.</DialogDescription></DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                    <div className="space-y-2"><Label htmlFor="card-holder">Cardholder Name</Label><Input id="card-holder" value={newCardHolder} onChange={e=>setNewCardHolder(e.target.value)} /></div>
+                                    <div className="space-y-2"><Label htmlFor="new-card-number">Card Number</Label><Input id="new-card-number" value={newCardNumber} onChange={e=>setNewCardNumber(e.target.value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 '))} placeholder="0000 0000 0000 0000" /></div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2"><Label htmlFor="new-card-expiry">Expiry (MM/YY)</Label><Input id="new-card-expiry" value={newCardExpiry} onChange={e=>setNewCardExpiry(e.target.value)} placeholder="MM/YY" /></div>
+                                        <div className="space-y-2"><Label htmlFor="new-card-cvc">CVC</Label><Input id="new-card-cvc" value={newCardCvc} onChange={e=>setNewCardCvc(e.target.value)} placeholder="123" /></div>
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button type="submit" onClick={handleAddCard} disabled={loading}>{loading ? <Loader className="animate-spin" /> : "Save Card"}</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {paymentMethods.length > 0 ? paymentMethods.map(method => (
+                            <div key={method.id} className="flex items-center justify-between p-3 rounded-md border bg-muted/20">
+                                <div className="flex items-center gap-4">
+                                    {method.type.toLowerCase() === 'visa' && <Image src="https://placehold.co/40x25.png" width={40} height={25} alt="Visa" data-ai-hint="visa logo" />}
+                                    {method.type.toLowerCase() === 'mastercard' && <Image src="https://placehold.co/40x25.png" width={40} height={25} alt="Mastercard" data-ai-hint="mastercard logo" />}
+                                    {method.type.toLowerCase() === 'mpesa' && <Smartphone />}
+                                    <div>
+                                        <p className="font-semibold">{method.type} ending in •••• {method.last4}</p>
+                                        {method.isPreferred && <span className="text-xs text-primary font-medium">Preferred</span>}
+                                    </div>
+                                </div>
+                                {!method.isPreferred && (
+                                     <Button variant="outline" size="sm" onClick={() => setPreferredMethod(method.id!)}><Star className="mr-2 h-4 w-4" /> Set as Preferred</Button>
+                                )}
+                            </div>
+                        )) : (
+                            <p className="text-muted-foreground text-center py-4">No payment methods saved.</p>
+                        )}
+                    </CardContent>
+                </Card>
             </TabsContent>
          </Tabs>
 

@@ -2,9 +2,7 @@
 'use client';
 
 import { useContext, useEffect, useState, useCallback } from 'react';
-import {
-  AuthContext
-} from '@/components/shared/AuthProvider';
+import { AuthContext } from '@/components/shared/AuthProvider';
 import { 
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword, 
@@ -14,11 +12,10 @@ import {
     updateProfile,
     RecaptchaVerifier,
     signInWithPhoneNumber,
-    onAuthStateChanged,
     User,
 } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
 export interface UserData {
@@ -46,8 +43,6 @@ export const useAuth = () => {
       if (doc.exists()) {
         setUserData(doc.data() as UserData);
       } else {
-        // This case can happen for users who signed up before the users collection was standard
-        // We can create a document for them here.
         setDoc(userDocRef, {}); 
         setUserData({});
       }
@@ -57,13 +52,11 @@ export const useAuth = () => {
     return () => unsubscribe();
   }, [user]);
 
-  const updateUserDataInFirestore = useCallback(async (data: Partial<UserData>) => {
-    if (!user) throw new Error("No user is signed in.");
+  const updateUserDataInFirestore = useCallback(async (uid: string, data: Partial<UserData>) => {
     const db = getFirestore(app);
-    const userDocRef = doc(db, 'users', user.uid);
-    // Use updateDoc for existing fields, or setDoc with merge for creating/updating
+    const userDocRef = doc(db, 'users', uid);
     await setDoc(userDocRef, data, { merge: true });
-  }, [user]);
+  }, []);
 
   const signInWithEmail = (email: string, pass: string) => {
     return signInWithEmailAndPassword(auth, email, pass);
@@ -71,9 +64,7 @@ export const useAuth = () => {
 
   const signUpWithEmail = async (email: string, pass: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-    // Create an empty user document in Firestore upon sign-up
-    const db = getFirestore(app);
-    await setDoc(doc(db, 'users', userCredential.user.uid), {});
+    await updateUserDataInFirestore(userCredential.user.uid, {});
     return userCredential;
   };
 
@@ -84,10 +75,7 @@ export const useAuth = () => {
     const userDocRef = doc(db, 'users', result.user.uid);
     const userDoc = await getDoc(userDocRef);
     if (!userDoc.exists()) {
-      // Create user doc if it doesn't exist (first-time Google sign-in)
-      await setDoc(userDocRef, {
-        address: ''
-      });
+      await updateUserDataInFirestore(result.user.uid, { address: '' });
     }
     return result;
   };
@@ -100,9 +88,7 @@ export const useAuth = () => {
 
         (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
             'size': 'invisible',
-            'callback': () => {
-              // reCAPTCHA solved
-            },
+            'callback': () => {},
             'expired-callback': () => {
                if((window as any).recaptchaVerifier) {
                    (window as any).recaptchaVerifier.render().catch((err: any) => console.error("Recaptcha rerender failed", err));
@@ -127,37 +113,36 @@ export const useAuth = () => {
   };
   
   const updateUserProfile = async (profile: { displayName?: string, photoURL?: string }, data?: Partial<UserData>) => {
-    if (!auth.currentUser) throw new Error("No user is signed in.");
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error("No user is signed in.");
     
     // Update Firebase Auth profile
     if (Object.keys(profile).length > 0) {
-      await updateProfile(auth.currentUser, profile);
+      await updateProfile(currentUser, profile);
+    }
+    
+    // Update Firestore data
+    if (data && Object.keys(data).length > 0) {
+      await updateUserDataInFirestore(currentUser.uid, data);
     }
 
     // Update the user state in the context to reflect changes immediately
-    // This is important for immediate UI feedback
-    const updatedUser = { ...auth.currentUser, ...profile } as User;
-    setUser(updatedUser);
-
-    // Update Firestore data
-    if (data && Object.keys(data).length > 0) {
-      await updateUserDataInFirestore(data);
-    }
+    setUser(auth.currentUser);
   }
   
   const updateUserAvatar = async (file: File): Promise<string> => {
-    if (!auth.currentUser) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
        throw new Error("No user is signed in.");
     }
     const storage = getStorage(app);
-    const storageRef = ref(storage, `avatars/${auth.currentUser.uid}/${file.name}`);
+    const storageRef = ref(storage, `avatars/${currentUser.uid}/${file.name}`);
     const snapshot = await uploadBytes(storageRef, file);
     const photoURL = await getDownloadURL(snapshot.ref);
     
-    // This will update auth profile and trigger a re-render via onAuthStateChanged
-    // which in turn re-triggers the user object in the context
-    await updateProfile(auth.currentUser, { photoURL });
-    setUser({ ...auth.currentUser, photoURL }); // Force immediate state update
+    // We only update the profile with the new URL, this triggers `onAuthStateChanged`
+    await updateProfile(currentUser, { photoURL });
+    setUser({ ...currentUser, photoURL }); // Force immediate state update
     
     return photoURL;
   }
