@@ -79,7 +79,7 @@ export default function EducationPage() {
                     {item.type === 'Video' ? 'Watch Now' : 'Read More'} &rarr;
                 </a>
             </div>
-          </Card>>
+          </Card>
         ))}
       </div>
 
