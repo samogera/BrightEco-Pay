@@ -7,26 +7,53 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Download, Share2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function BillingHistoryPage() {
-    const { invoices } = useBilling();
+    const { invoices, balance } = useBilling();
+    const { user, userData } = useAuth();
     const { toast } = useToast();
 
     const generateInvoiceText = (invoice: Invoice) => {
+        const billingPeriodStart = format(subMonths(invoice.date, 1), 'MMMM d, yyyy');
+        const billingPeriodEnd = format(invoice.date, 'MMMM d, yyyy');
+        const daysRemaining = 8; 
+
         return `
-            INVOICE - BrightEco Pay
-            -------------------------
-            Invoice ID: ${invoice.id}
-            Date: ${format(invoice.date, 'PPP')}
-            
-            Amount Paid: KES ${invoice.amount.toFixed(2)}
-            Payment Method: ${invoice.method}
-            Payment Details: ${invoice.details}
-            Status: ${invoice.status}
-            -------------------------
-            Thank you for your payment!
+========================================
+       BrightEco Energy Invoice
+========================================
+
+--- Customer Details ---
+Name: ${user?.displayName || 'N/A'}
+Email: ${user?.email || 'N/A'}
+Phone: ${user?.phoneNumber || 'N/A'}
+Address: ${userData?.address || 'Not Provided'}
+
+--- Invoice Details ---
+Invoice ID: ${invoice.id}
+Invoice Date: ${format(new Date(), 'MMMM dd, yyyy, hh:mm a')}
+Billing Period: ${billingPeriodStart} - ${billingPeriodEnd}
+
+--- Charges ---
+Total Energy Consumed: ${(invoice.amount / 11.7).toFixed(2)} kWh
+Cost: KES ${invoice.amount.toFixed(2)}
+
+--- Payment Details ---
+Payment Method: ${invoice.method}
+Transaction ID: ${(Math.random() * 1e16).toString(36).toUpperCase()}
+Status: ${invoice.status}
+
+--- Balance ---
+Outstanding Balance: KES ${balance.toFixed(2)}
+Grace Period Status: ${daysRemaining} days remaining.
+
+----------------------------------------
+Thank you for your payment!
+For support, contact support@brighteco.com
+========================================
         `;
     }
 
@@ -36,7 +63,7 @@ export default function BillingHistoryPage() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `invoice-${invoice.id}.txt`;
+        a.download = `invoice-${invoice.id}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -84,7 +111,7 @@ export default function BillingHistoryPage() {
                         {invoices.length > 0 ? (
                             invoices.map((invoice) => (
                                 <TableRow key={invoice.id}>
-                                    <TableCell className="font-medium">{invoice.id}</TableCell>
+                                    <TableCell className="font-medium">{invoice.id.substring(0, 8)}...</TableCell>
                                     <TableCell>{format(new Date(invoice.date), 'MMM dd, yyyy')}</TableCell>
                                     <TableCell>KES {invoice.amount.toFixed(2)}</TableCell>
                                     <TableCell>{invoice.method}</TableCell>

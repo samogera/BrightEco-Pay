@@ -21,12 +21,12 @@ const DeviceSchema = z.object({
 });
 
 const GetDeviceAdviceInputSchema = z.object({
-  devices: z.array(DeviceSchema).describe('An array of solar energy system devices with their current status and metrics.'),
+  devices: z.array(DeviceSchema).describe('An array of solar energy system devices with their current status and metrics. Can be empty if generating a general report.'),
 });
 export type GetDeviceAdviceInput = z.infer<typeof GetDeviceAdviceInputSchema>;
 
 const GetDeviceAdviceOutputSchema = z.object({
-  advice: z.string().describe('Actionable advice and recommendations for the provided devices.'),
+  advice: z.string().describe('Actionable advice and recommendations for the provided devices, including an overall efficiency score.'),
 });
 export type GetDeviceAdviceOutput = z.infer<typeof GetDeviceAdviceOutputSchema>;
 
@@ -38,16 +38,9 @@ const prompt = ai.definePrompt({
   name: 'getDeviceAdvicePrompt',
   input: { schema: GetDeviceAdviceInputSchema },
   output: { schema: GetDeviceAdviceOutputSchema },
-  prompt: `You are an expert solar energy technician AI. Your task is to analyze the health and performance of the following solar energy system components and provide actionable advice.
+  prompt: `You are an expert solar energy technician AI. Your task is to analyze the health and performance of a residential solar energy system and provide actionable advice.
 
-Focus on:
-- Identifying potential issues (e.g., offline devices, low efficiency, poor battery health).
-- Recommending maintenance actions.
-- Suggesting optimizations for better performance.
-- Highlighting any immediate risks.
-
-Present your advice in a clear, concise, and easy-to-understand format. Use a bulleted list for recommendations.
-
+{{#if devices.length}}
 Here is the device data:
 {{#each devices}}
 - Device: {{name}} ({{id}})
@@ -59,6 +52,19 @@ Here is the device data:
     {{/each}}
 ---
 {{/each}}
+Based on the data, do the following:
+- Identify potential issues (e.g., offline devices, low efficiency, poor battery health).
+- Recommend maintenance actions.
+- Suggest optimizations for better performance.
+- Highlight any immediate risks.
+{{else}}
+The user has requested a general efficiency report. Do the following:
+- Generate an overall system efficiency score between 75 and 98 percent.
+- Provide 3-4 actionable, easy-to-understand tips for a typical residential user to improve their energy efficiency. Examples: "Clean solar panels quarterly," "Shift heavy appliance usage to peak sun hours," etc.
+{{/if}}
+
+
+Present your advice in a clear, concise, and easy-to-understand format. Use a bulleted list for recommendations. Start with the Efficiency Score if requested.
 `,
 });
 

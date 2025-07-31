@@ -11,7 +11,8 @@ import {
   Zap,
   Download,
   FileText,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Loader
 } from 'lucide-react';
 import Link from 'next/link';
 import { DateRange } from "react-day-picker"
@@ -40,6 +41,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/use-auth';
+import { getDeviceAdvice } from '@/ai/flows/get-device-advice';
+import { useToast } from '@/hooks/use-toast';
 
 
 function GracePeriodAlert() {
@@ -132,7 +136,10 @@ type TimeRangePreset = 'Day' | 'Week' | 'Month' | 'Year';
 
 export default function DashboardPage() {
   const { balance, dueDate } = useBilling();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [activePreset, setActivePreset] = useState<TimeRangePreset>('Day');
+  const [reportLoading, setReportLoading] = useState(false);
   
   const [date, setDate] = useState<DateRange | undefined>({
     from: new Date(),
@@ -173,23 +180,56 @@ export default function DashboardPage() {
   }, [date]);
 
 
-  const handleDownload = (formatType: 'pdf' | 'csv') => {
+  const handleDownload = async (formatType: 'pdf' | 'csv') => {
+    setReportLoading(true);
+    toast({ title: 'Generating Report...', description: 'Please wait while we generate your usage report.'});
+
+    let aiAdvice = 'Could not generate AI advice at this time.';
+    try {
+        const adviceResult = await getDeviceAdvice({ devices: [] }); // Sending empty for general advice
+        aiAdvice = adviceResult.advice;
+    } catch (e) {
+        console.error("Failed to get AI advice for report", e);
+    }
+
+    const totalUsage = chartData.reduce((acc, item) => acc + item.usage, 0);
+    
     // In a real app, this would be a more sophisticated report
+    let reportContent = '';
     const headers = [dataKey.charAt(0).toUpperCase() + dataKey.slice(1), `Usage (${unit})`];
     const rows = chartData.map(item => [item[dataKey], item.usage]);
-    
-    let reportContent = `BrightEco Usage Report\nDate Range: ${displayedDate}\n\n`;
 
-    if(formatType === 'csv') {
+    if (formatType === 'pdf') {
+        reportContent = `
+========================================
+      BrightEco Energy Usage Report
+========================================
+
+--- User Details ---
+Name: ${user?.displayName || 'N/A'}
+Email: ${user?.email || 'N/A'}
+Phone: ${user?.phoneNumber || 'N/A'}
+
+--- Report Details ---
+Date Range: ${displayedDate}
+Generated On: ${format(new Date(), 'MMMM dd, yyyy, hh:mm a')}
+
+--- Usage Metrics ---
+Total Energy Consumed: ${totalUsage.toFixed(2)} ${unit}
+Peak Usage Time: 1:00 PM (Simulated)
+Energy Credit Balance: KES ${balance.toFixed(2)}
+
+--- AI Efficiency Analysis ---
+${aiAdvice}
+
+========================================
+        `;
+    } else { // CSV
+      reportContent += `Date Range,"${displayedDate}"\n`;
+      reportContent += `Generated On,"${format(new Date(), 'MMMM dd, yyyy, hh:mm a')}"\n\n`;
       reportContent += headers.join(',') + '\n';
       rows.forEach(row => {
         reportContent += row.join(',') + '\n';
-      });
-    } else { // Plain text for "PDF"
-       reportContent += headers.join('\t\t') + '\n';
-       reportContent += "-------------------------\n";
-       rows.forEach(row => {
-        reportContent += row.join('\t\t') + '\n';
       });
     }
 
@@ -197,11 +237,12 @@ export default function DashboardPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `usage-report-${format(new Date(), 'yyyy-MM-dd')}.${formatType === 'csv' ? 'csv' : 'txt'}`;
+    a.download = `brighteco-usage-report-${format(new Date(), 'yyyy-MM-dd')}.${formatType === 'csv' ? 'csv' : 'txt'}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    setReportLoading(false);
   };
   
   const handleDateNav = (direction: 'prev' | 'next') => {
@@ -321,8 +362,9 @@ export default function DashboardPage() {
                     <div className="flex justify-end">
                        <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline">
-                              <Download className="mr-2 h-4 w-4" /> Download Report
+                            <Button variant="outline" disabled={reportLoading}>
+                              {reportLoading ? <Loader className="animate-spin mr-2" /> : <Download className="mr-2 h-4 w-4" />} 
+                              Download Report
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
