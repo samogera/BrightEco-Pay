@@ -90,7 +90,9 @@ export default function DashboardLayout({children}: PropsWithChildren) {
   if (loading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader className="h-16 w-16 animate-spin text-primary" />
+        <div className="animate-pulse">
+            <Logo />
+        </div>
       </div>
     );
   }
