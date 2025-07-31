@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, Zap, Lightbulb, Tv, Smartphone, Refrigerator, RefreshCcw, ArrowRight, CheckCircle, Fan, Router, Laptop } from 'lucide-react';
