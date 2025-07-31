@@ -15,6 +15,7 @@ import {
   Moon,
   Sun,
   Loader,
+  BookOpen,
 } from 'lucide-react';
 import type {PropsWithChildren} from 'react';
 
@@ -103,7 +104,7 @@ export default function DashboardLayout({children}: PropsWithChildren) {
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href}
+                  isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
                   tooltip={{children: item.label}}
                 >
                   <Link href={item.href}>

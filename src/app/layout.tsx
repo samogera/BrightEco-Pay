@@ -7,8 +7,8 @@ import { AuthProvider } from '@/components/shared/AuthProvider';
 import { BillingProvider } from '@/hooks/use-billing';
 
 export const metadata: Metadata = {
-  title: 'BrightEco Pay for Schools',
-  description: 'Clean, reliable solar energy for educational institutions.',
+  title: 'BrightEco Pay',
+  description: 'Clean, reliable solar energy for homes and businesses.',
 };
 
 export default function RootLayout({

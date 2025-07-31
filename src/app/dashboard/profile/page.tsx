@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,17 +20,20 @@ export default function ProfilePage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('123 Solar Lane, Nairobi');
-  const [avatar, setAvatar] = useState('');
+  
+  const [avatarPreview, setAvatarPreview] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const [loading, setLoading] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
         setName(user.displayName || '');
         setEmail(user.email || '');
-        setPhone(user.phoneNumber || '');
-        setAvatar(user.photoURL || `https://placehold.co/100x100.png?text=${(user.displayName || user.email || 'U').charAt(0)}`);
+        setPhone(user.phoneNumber || '+254712345678'); // Default if not set
+        setAvatarPreview(user.photoURL || `https://placehold.co/100x100.png?text=${(user.displayName || user.email || 'U').charAt(0)}`);
     }
   }, [user]);
 
@@ -38,11 +41,9 @@ export default function ProfilePage() {
     e.preventDefault();
     setLoading(true);
     try {
-        let photoURL = user?.photoURL;
         if (avatarFile) {
-            photoURL = await updateUserAvatar(avatarFile);
-            setAvatar(photoURL!);
-            setAvatarFile(null);
+            await updateUserAvatar(avatarFile);
+            setAvatarFile(null); // Clear file after upload
         }
         
         if (name !== user?.displayName) {
@@ -51,7 +52,7 @@ export default function ProfilePage() {
         
       toast({
         title: 'Profile Updated',
-        description: 'Your profile information has been saved.',
+        description: 'Your profile information has been successfully saved.',
       });
     } catch(error: any) {
         toast({ title: 'Update Failed', description: error.message, variant: 'destructive' });
@@ -66,7 +67,7 @@ export default function ProfilePage() {
       setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setAvatar(reader.result as string);
+        setAvatarPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -81,23 +82,34 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle className="font-headline text-xl">Your Profile</CardTitle>
-          <CardDescription>View and manage your account details.</CardDescription>
+          <CardDescription>View and manage your account details. Changes are saved automatically.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleSaveChanges}>
             <div className="flex flex-col md:flex-row items-center gap-6">
                 <div className="relative">
-                <Avatar className="h-24 w-24">
-                    <AvatarImage src={avatar} alt={name} data-ai-hint="user avatar" />
-                    <AvatarFallback>{name.charAt(0) || email.charAt(0) || 'U'}</AvatarFallback>
-                </Avatar>
-                <Button asChild size="icon" className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full">
-                    <Label htmlFor="avatar-upload">
-                        <Upload />
-                        <span className="sr-only">Upload Avatar</span>
-                    </Label>
-                </Button>
-                <Input id="avatar-upload" type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={loading} />
+                  <Avatar className="h-24 w-24">
+                      <AvatarImage src={avatarPreview} alt={name} data-ai-hint="user avatar" />
+                      <AvatarFallback>{name?.charAt(0) || email?.charAt(0) || 'U'}</AvatarFallback>
+                  </Avatar>
+                  <Button 
+                    type="button"
+                    size="icon" 
+                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                      <Upload />
+                      <span className="sr-only">Upload Avatar</span>
+                  </Button>
+                  <Input 
+                    id="avatar-upload" 
+                    ref={fileInputRef}
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleAvatarChange} 
+                    disabled={loading} 
+                  />
                 </div>
                 <div className="text-center md:text-left">
                 <h2 className="text-2xl font-bold">{name || 'New User'}</h2>

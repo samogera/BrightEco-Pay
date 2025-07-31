@@ -10,7 +10,7 @@ import { LifeBuoy, Phone, MessageSquare, MapPin } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import Image from "next/image";
+import Link from "next/link";
 
 
 export default function SupportPage() {
@@ -124,13 +124,16 @@ export default function SupportPage() {
               </div>
             </div>
             <div className="relative h-48 w-full rounded-md overflow-hidden mt-4">
-                <Image 
-                    src="https://placehold.co/600x400.png"
-                    alt="Map showing office location"
-                    layout="fill"
-                    objectFit="cover"
-                    data-ai-hint="map location"
-                />
+                <iframe
+                    src={`https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=Nairobi`}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen={false}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Office Location"
+                ></iframe>
             </div>
           </CardContent>
         </Card>
@@ -143,7 +146,7 @@ export default function SupportPage() {
           </CardHeader>
           <CardContent>
              <Button variant="outline" asChild>
-                <a href="#">Visit FAQ Page</a>
+                <Link href="/dashboard/support/faq">Visit FAQ Page</Link>
              </Button>
           </CardContent>
         </Card>

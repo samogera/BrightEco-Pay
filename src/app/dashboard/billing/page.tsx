@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -42,22 +43,47 @@ function PayPalIcon(props: React.SVGProps<SVGSVGElement>) {
 
 export default function BillingPage() {
   const { toast } = useToast();
-  const { balance, dueDate, makePayment } = useBilling();
+  const { balance, dueDate, makePayment, addInvoice } = useBilling();
   const [paymentAmount, setPaymentAmount] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cardType, setCardType] = useState('');
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const number = e.target.value;
+    if (/^4/.test(number)) {
+        setCardType('visa');
+    } else if (/^5[1-5]/.test(number)) {
+        setCardType('mastercard');
+    } else {
+        setCardType('');
+    }
+  }
+
+  const processPayment = (amount: number, method: string, details: string) => {
+    makePayment(amount);
+    addInvoice({
+        id: `INV-${Date.now()}`,
+        amount,
+        date: new Date(),
+        method,
+        status: 'Paid',
+        details,
+    });
+     toast({
+        title: 'Payment Successful',
+        description: `Your ${method} payment of KES ${amount} has been processed.`,
+    });
+    setPaymentAmount('');
+  }
+
 
   const handleGenericPayment = (amount: number, method: string) => {
     setLoading(true);
     // Simulate API call delay
     setTimeout(() => {
         try {
-            makePayment(amount);
-            toast({
-                title: 'Payment Successful',
-                description: `Your ${method} payment of KES ${amount} has been processed.`,
-            });
-            setPaymentAmount('');
+            processPayment(amount, method, 'Card ending in 1234');
         } catch (error: any) {
              toast({
                 title: 'Payment Failed',
@@ -91,16 +117,9 @@ export default function BillingPage() {
 
     setLoading(true);
     try {
-      // Simulate STK Push
       const result = await sendStkPush({ phone, amount: numericAmount });
       if (result.success) {
-        // On "successful" push, process the payment
-        makePayment(numericAmount);
-        toast({
-          title: 'STK Push Sent & Payment Processed',
-          description: `Payment of KES ${numericAmount} successful. Your balance has been updated.`,
-        });
-        setPaymentAmount('');
+        processPayment(numericAmount, 'M-Pesa', `STK Push to ${phone}`);
         setPhone('');
       } else {
         toast({
@@ -127,7 +146,7 @@ export default function BillingPage() {
       toast({ title: 'Invalid Amount', description: 'Please enter a valid amount.', variant: 'destructive' });
       return;
     }
-    handleGenericPayment(numericAmount, 'card');
+    handleGenericPayment(numericAmount, 'Card');
   }
   
   const handlePayPalPayment = () => {
@@ -137,7 +156,6 @@ export default function BillingPage() {
       return;
     }
     setLoading(true);
-    // Simulate redirection to PayPal
     setTimeout(() => {
         toast({
             title: 'Redirecting to PayPal...',
@@ -145,6 +163,7 @@ export default function BillingPage() {
         });
         // In a real app, this would be a window.location.href change
         console.log("Redirecting to PayPal for payment of KES", numericAmount);
+        processPayment(numericAmount, 'PayPal', 'Transaction via PayPal');
         setLoading(false);
     }, 1500)
   }
@@ -220,10 +239,10 @@ export default function BillingPage() {
                 <div className="space-y-2">
                     <Label htmlFor="card-number">Card Number</Label>
                      <div className="relative">
-                        <Input id="card-number" placeholder="0000 0000 0000 0000" disabled={loading} className="pr-24" />
-                        <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
-                            <Image src="https://placehold.co/32x20.png" width={32} height={20} alt="Visa" data-ai-hint="visa logo" />
-                             <Image src="https://placehold.co/32x20.png" width={32} height={20} alt="Mastercard" data-ai-hint="mastercard logo" />
+                        <Input id="card-number" placeholder="0000 0000 0000 0000" disabled={loading} className="pr-24" onChange={handleCardNumberChange} />
+                         <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
+                            <Image src="https://placehold.co/32x20.png" width={32} height={20} alt="Visa" data-ai-hint="visa logo" className={cn(cardType === 'visa' ? 'opacity-100' : 'opacity-50')} />
+                            <Image src="https://placehold.co/32x20.png" width={32} height={20} alt="Mastercard" data-ai-hint="mastercard logo" className={cn(cardType === 'mastercard' ? 'opacity-100' : 'opacity-50')} />
                         </div>
                     </div>
                 </div>
@@ -247,8 +266,8 @@ export default function BillingPage() {
              <div className="space-y-4 text-center max-w-md mx-auto">
                 <h3 className="text-lg font-medium">Pay with PayPal</h3>
                 <p className="text-muted-foreground">You will be redirected to PayPal to complete your payment securely.</p>
-                <Button asChild className="w-full sm:w-auto" disabled={loading || !paymentAmount}>
-                    <a href="https://www.paypal.com/signin" target="_blank" rel="noopener noreferrer">
+                <Button asChild className="w-full sm:w-auto" disabled={loading || !paymentAmount} onClick={handlePayPalPayment}>
+                    <a target="_blank" rel="noopener noreferrer">
                         {loading ? <Loader className="animate-spin" /> : <><PayPalIcon className="mr-2"/> Proceed to PayPal</>}
                     </a>
                 </Button>
@@ -258,8 +277,8 @@ export default function BillingPage() {
 
         <Separator />
          <div className="flex justify-end">
-            <Button variant="outline" onClick={() => toast({ title: "Coming Soon!", description: "Your payment history will be available here."})}>
-                View Payment History
+             <Button variant="outline" asChild>
+              <Link href="/dashboard/billing/history">View Payment History</Link>
             </Button>
          </div>
       </CardContent>
