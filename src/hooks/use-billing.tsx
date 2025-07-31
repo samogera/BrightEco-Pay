@@ -4,7 +4,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { addDays, addMonths } from 'date-fns';
 import { useAuth } from './use-auth';
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, Timestamp, runTransaction } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
 const MOCK_MONTHLY_FEE = 2550;
@@ -21,6 +21,7 @@ export interface Invoice {
 interface BillingState {
     balance: number;
     dueDate: Date | null;
+    walletBalance: number;
 }
 
 interface BillingContextType extends BillingState {
@@ -28,20 +29,21 @@ interface BillingContextType extends BillingState {
   loading: boolean;
   makePayment: (amount: number) => Promise<void>;
   addInvoice: (invoice: Omit<Invoice, 'id' | 'date'>) => Promise<void>;
+  addToWallet: (amount: number) => Promise<void>;
 }
 
 const BillingContext = createContext<BillingContextType | undefined>(undefined);
 
 export const BillingProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
-  const [billingState, setBillingState] = useState<BillingState>({ balance: MOCK_MONTHLY_FEE, dueDate: addDays(new Date(), 8) });
+  const [billingState, setBillingState] = useState<BillingState>({ balance: MOCK_MONTHLY_FEE, dueDate: addDays(new Date(), 8), walletBalance: 0 });
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
         setLoading(false);
-        setBillingState({ balance: MOCK_MONTHLY_FEE, dueDate: addDays(new Date(), 8) });
+        setBillingState({ balance: MOCK_MONTHLY_FEE, dueDate: addDays(new Date(), 8), walletBalance: 0 });
         setInvoices([]);
         return;
     }
@@ -57,11 +59,12 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
             setBillingState({
                 balance: data.balance,
                 dueDate: (data.dueDate as Timestamp)?.toDate() || null,
+                walletBalance: data.walletBalance || 0
             });
         } else {
-            // Initialize for new user
             const initialDueDate = addDays(new Date(), 30);
-            setDoc(billingDocRef, { balance: MOCK_MONTHLY_FEE, dueDate: initialDueDate });
+            const initialData = { balance: MOCK_MONTHLY_FEE, dueDate: initialDueDate, walletBalance: 0 };
+            setDoc(billingDocRef, initialData);
         }
         setLoading(false);
     });
@@ -95,6 +98,24 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [user]);
 
+  const addToWallet = useCallback(async (amount: number) => {
+    if (!user) throw new Error("User not authenticated");
+    if (amount <= 0) throw new Error("Top-up amount must be positive.");
+    const db = getFirestore(app);
+    const billingDocRef = doc(db, 'billing', user.uid);
+
+    await runTransaction(db, async (transaction) => {
+        const billingDoc = await transaction.get(billingDocRef);
+        if (!billingDoc.exists()) {
+            throw new Error("Billing document does not exist!");
+        }
+        const currentWallet = billingDoc.data().walletBalance || 0;
+        const newWallet = currentWallet + amount;
+        transaction.update(billingDocRef, { walletBalance: newWallet });
+    });
+
+  }, [user]);
+
   const makePayment = useCallback(async (amount: number) => {
     if (!user) throw new Error("User not authenticated");
     if (amount <= 0) throw new Error("Payment amount must be positive.");
@@ -102,18 +123,25 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     const db = getFirestore(app);
     const billingDocRef = doc(db, 'billing', user.uid);
 
-    setBillingState(prevState => {
-        const newBalance = prevState.balance - amount;
-        let newDueDate = prevState.dueDate || new Date();
+    await runTransaction(db, async (transaction) => {
+        const billingDoc = await transaction.get(billingDocRef);
+        if (!billingDoc.exists()) {
+            throw new Error("Billing document does not exist!");
+        }
+        
+        const data = billingDoc.data();
+        const currentBalance = data.balance;
+        const currentDueDate = (data.dueDate as Timestamp).toDate();
 
-        if (newBalance < prevState.balance) {
-             // If they paid off a full monthly fee, extend by 30 days
-             const monthsPaid = Math.floor((prevState.balance - newBalance) / MOCK_MONTHLY_FEE);
+        const newBalance = currentBalance - amount;
+        let newDueDate = currentDueDate || new Date();
+
+        if (newBalance < currentBalance) {
+             const monthsPaid = Math.floor(amount / MOCK_MONTHLY_FEE);
              if (monthsPaid > 0) {
                  newDueDate = addMonths(newDueDate, monthsPaid);
              }
 
-             // Handle overpayment by extending due date further
              if (newBalance < 0) {
                 const credit = Math.abs(newBalance);
                 const extraDays = Math.floor((credit / MOCK_MONTHLY_FEE) * 30);
@@ -121,20 +149,15 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
              }
         }
         
-        const updatedState = {
+        transaction.update(billingDocRef, { 
             balance: Math.max(0, newBalance),
             dueDate: newDueDate,
-        };
-
-        // Update firestore
-        setDoc(billingDocRef, updatedState, { merge: true });
-        
-        return updatedState;
+        });
     });
 
   }, [user]);
 
-  const value = { ...billingState, invoices, loading, makePayment, addInvoice };
+  const value = { ...billingState, invoices, loading, makePayment, addInvoice, addToWallet };
 
   return (
     <BillingContext.Provider value={value}>

@@ -9,6 +9,9 @@ import {
   ChevronRight,
   Sun,
   Zap,
+  Download,
+  FileText,
+  FileSpreadsheet
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -26,7 +29,15 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { differenceInDays, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 
 function GracePeriodAlert() {
@@ -83,13 +94,35 @@ type TimeRange = 'Day' | 'Week' | 'Month' | 'Year';
 export default function DashboardPage() {
   const { balance, dueDate } = useBilling();
   const [activeRange, setActiveRange] = useState<TimeRange>('Day');
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  
+  const displayedDate = useMemo(() => {
+    if (activeRange === 'Day') return format(date || new Date(), 'MMMM dd, yyyy');
+    if (activeRange === 'Week') return `Week of ${format(date || new Date(), 'MMMM dd')}`;
+    if (activeRange === 'Month') return format(date || new Date(), 'MMMM yyyy');
+    if (activeRange === 'Year') return format(date || new Date(), 'yyyy');
+    return format(date || new Date(), 'PPP');
+  }, [date, activeRange]);
+
+
+  const handleDownload = (format: 'pdf' | 'csv') => {
+    const reportContent = `BrightEco Usage Report\nDate: ${displayedDate}\nFormat: ${format.toUpperCase()}\n\n---\nThis is a sample report. In a real application, this would contain detailed usage data.`;
+    const blob = new Blob([reportContent], { type: format === 'pdf' ? 'application/pdf' : 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `usage-report-${displayedDate}.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
   
   return (
     <div className="space-y-6">
       <GracePeriodAlert />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Usage Section */}
         <div className="lg:col-span-2">
             <Card className="h-full">
                  <CardHeader>
@@ -112,21 +145,40 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center gap-1">
-                            <Button variant={activeRange === 'Day' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveRange('Day')}>Day</Button>
-                            <Button variant={activeRange === 'Week' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveRange('Week')}>Week</Button>
-                            <Button variant={activeRange === 'Month' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveRange('Month')}>Month</Button>
-                            <Button variant={activeRange === 'Year' ? 'default' : 'ghost'} size="sm" onClick={() => setActiveRange('Year')}>Year</Button>
-                             <Button variant="outline" size="icon" className="h-9 w-9">
-                                <CalendarDays className="h-4 w-4" />
-                            </Button>
+                        <div className="flex items-center gap-1 rounded-md bg-muted p-1">
+                            {(['Day', 'Week', 'Month', 'Year'] as TimeRange[]).map(range => (
+                                <Button 
+                                    key={range} 
+                                    variant={activeRange === range ? 'default' : 'ghost'} 
+                                    size="sm" 
+                                    onClick={() => setActiveRange(range)}
+                                    className="h-8 px-3"
+                                >
+                                    {range}
+                                </Button>
+                            ))}
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" size="icon" className="h-8 w-8">
+                            <Button variant="outline" size="icon" className="h-9 w-9">
                                 <ChevronLeft className="h-4 w-4" />
                             </Button>
-                            <span className="font-semibold text-sm">10 Jul, 2024</span>
-                            <Button variant="outline" size="icon" className="h-8 w-8">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <Button variant="outline" className="h-9 w-[200px] justify-start text-left font-normal">
+                                    <CalendarDays className="mr-2 h-4 w-4" />
+                                    <span>{displayedDate}</span>
+                                </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={date}
+                                    onSelect={setDate}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                             <Button variant="outline" size="icon" className="h-9 w-9">
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
                         </div>
@@ -138,16 +190,30 @@ export default function DashboardPage() {
                         <EnergyUsageChart />
                     </div>
 
-
                     <div className="flex justify-end">
-                        <Button variant="outline">Download Report</Button>
+                       <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline">
+                              <Download className="mr-2 h-4 w-4" /> Download Report
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => handleDownload('pdf')}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                Download as PDF
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                               <FileSpreadsheet className="mr-2 h-4 w-4" />
+                                Download as CSV
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
 
                 </CardContent>
             </Card>
         </div>
 
-        {/* Side Cards for Key Metrics */}
         <div className="space-y-6">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -190,3 +256,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
