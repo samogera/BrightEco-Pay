@@ -3,6 +3,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { format } from 'date-fns';
+import { Loader, CreditCard, Smartphone } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -13,14 +17,12 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { sendStkPush } from '@/ai/flows/send-stk-push';
-import { Loader, CreditCard, Smartphone } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from '@/hooks/use-toast';
 import { useBilling } from '@/hooks/use-billing';
-import { format } from 'date-fns';
-import Image from 'next/image';
+import { sendStkPush } from '@/ai/flows/send-stk-push';
+import { cn } from '@/lib/utils';
 
 function PayPalIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
