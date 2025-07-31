@@ -13,10 +13,13 @@ import {
     RecaptchaVerifier,
     signInWithPhoneNumber,
     User,
+    signInWithRedirect,
+    getRedirectResult
 } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
+import { useToast } from './use-toast';
 
 export interface UserData {
   address?: string;
@@ -27,6 +30,34 @@ export const useAuth = () => {
   const { auth, user, setUser, loading } = useContext(AuthContext);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isUserDataLoading, setIsUserDataLoading] = useState(true);
+  const { toast } = useToast();
+
+  const updateUserDataInFirestore = useCallback(async (uid: string, data: Partial<UserData>) => {
+    const db = getFirestore(app);
+    const userDocRef = doc(db, 'users', uid);
+    await setDoc(userDocRef, data, { merge: true });
+  }, []);
+
+  // Effect to handle redirect result from Google Sign-In
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          toast({ title: 'Login Successful', description: 'Welcome!' });
+          const userDocRef = doc(getFirestore(app), 'users', result.user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (!userDoc.exists()) {
+            await updateUserDataInFirestore(result.user.uid, { address: '' });
+          }
+        }
+      } catch (error: any) {
+        toast({ title: 'Login Failed', description: error.message, variant: 'destructive' });
+      }
+    };
+    
+    handleRedirectResult();
+  }, [auth, toast, updateUserDataInFirestore]);
 
   useEffect(() => {
     if (!user) {
@@ -52,11 +83,7 @@ export const useAuth = () => {
     return () => unsubscribe();
   }, [user]);
 
-  const updateUserDataInFirestore = useCallback(async (uid: string, data: Partial<UserData>) => {
-    const db = getFirestore(app);
-    const userDocRef = doc(db, 'users', uid);
-    await setDoc(userDocRef, data, { merge: true });
-  }, []);
+
 
   const signInWithEmail = (email: string, pass: string) => {
     return signInWithEmailAndPassword(auth, email, pass);
@@ -70,14 +97,9 @@ export const useAuth = () => {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    const db = getFirestore(app);
-    const userDocRef = doc(db, 'users', result.user.uid);
-    const userDoc = await getDoc(userDocRef);
-    if (!userDoc.exists()) {
-      await updateUserDataInFirestore(result.user.uid, { address: '' });
-    }
-    return result;
+    // For a better mobile experience and to avoid pop-up blocker issues,
+    // we use signInWithRedirect instead of signInWithPopup.
+    await signInWithRedirect(auth, provider);
   };
   
   const setupRecaptcha = (containerId: string) => {
