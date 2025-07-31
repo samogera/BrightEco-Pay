@@ -178,6 +178,7 @@ export default function Home() {
                       <li><Link href="/login" className="hover:text-primary">User Login</Link></li>
                       <li><Link href="/admin/login" className="hover:text-primary">Admin Login</Link></li>
                       <li><Link href="/faq" className="hover:text-primary">FAQ</Link></li>
+                      <li><Link href="/contact" className="hover:text-primary">Contact</Link></li>
                   </ul>
               </div>
                <div className="space-y-2">

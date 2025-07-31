@@ -96,7 +96,7 @@ export function SolarSavingsCalculator() {
                      <Separator className="my-6"/>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Button size="lg" asChild>
-                            <Link href="/dashboard/support">
+                            <Link href="/contact">
                                 Get Started with this Plan <ArrowRight className="ml-2" />
                             </Link>
                         </Button>
