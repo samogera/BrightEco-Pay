@@ -21,15 +21,15 @@ const chartData = [
 const chartConfig = {
   usage: {
     label: 'kWh',
-    color: 'hsl(var(--primary))',
+    color: 'hsl(var(--chart-1))',
   },
 } satisfies ChartConfig;
 
 export function EnergyUsageChart() {
   return (
-    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+    <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
       <BarChart accessibilityLayer data={chartData}>
-        <CartesianGrid vertical={false} />
+        <CartesianGrid vertical={false} strokeDasharray="3 3" strokeOpacity={0.2} />
         <XAxis
           dataKey="month"
           tickLine={false}
@@ -38,7 +38,7 @@ export function EnergyUsageChart() {
           tickFormatter={value => value.slice(0, 3)}
         />
         <YAxis
-          stroke="#888888"
+          stroke="hsl(var(--muted-foreground))"
           fontSize={12}
           tickLine={false}
           axisLine={false}

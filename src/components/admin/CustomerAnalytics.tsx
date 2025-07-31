@@ -7,8 +7,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { Users, Wallet, TrendingUp, School } from 'lucide-react';
 
 const complianceData = [
-  { name: 'Compliant', value: 450, fill: 'hsl(var(--chart-1))' },
-  { name: 'Non-Compliant', value: 50, fill: 'hsl(var(--destructive))' },
+  { name: 'Compliant', value: 450, fill: 'hsl(var(--chart-2))' },
+  { name: 'Non-Compliant', value: 50, fill: 'hsl(var(--chart-5))' },
 ];
 
 const customerData = [
@@ -119,10 +119,10 @@ export function CustomerAnalytics() {
                      <ChartContainer config={chartConfig} className="w-full h-[250px]">
                         <ResponsiveContainer>
                             <BarChart data={customerData}>
-                                <CartesianGrid vertical={false} />
+                                <CartesianGrid vertical={false} strokeDasharray="3 3" strokeOpacity={0.2} />
                                 <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
-                                <YAxis yAxisId="left" width={60} tickFormatter={(value) => `K${value / 1000}`} />
-                                <YAxis yAxisId="right" orientation="right" width={40} />
+                                <YAxis yAxisId="left" width={60} tickFormatter={(value) => `K${value / 1000}`} stroke="hsl(var(--muted-foreground))" />
+                                <YAxis yAxisId="right" orientation="right" width={40} stroke="hsl(var(--muted-foreground))" />
                                 <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
                                 <Legend />
                                 <Bar yAxisId="left" dataKey="revenue" fill="var(--color-revenue)" radius={[4, 4, 0, 0]} name="Revenue" />
