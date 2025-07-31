@@ -3,7 +3,7 @@
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { useAuth } from './use-auth';
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, Timestamp, writeBatch, doc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, Timestamp, writeBatch, doc, setDoc } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { CreditCard, Sun, Wallet } from 'lucide-react';
 
