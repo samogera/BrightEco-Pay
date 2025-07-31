@@ -1,5 +1,5 @@
 import {
-  ArrowUpRight,
+  AlertTriangle,
   BatteryFull,
   Sun,
   Zap,
@@ -45,7 +45,24 @@ function DeviceStatusCard({
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+       <Card className="bg-destructive/10 border-destructive/50 text-destructive-foreground">
+        <CardHeader className="flex flex-row items-start gap-4 space-y-0">
+            <AlertTriangle className="h-6 w-6 text-destructive" />
+            <div className="flex-1">
+                <CardTitle>Grace Period Ending Soon</CardTitle>
+                <CardDescription className="text-destructive-foreground/80">
+                    Your account is currently in its grace period. To avoid service interruption, please make a payment before the period ends in <strong>2 days</strong>.
+                </CardDescription>
+            </div>
+        </CardHeader>
+        <CardContent>
+             <Button asChild variant="destructive">
+                <Link href="/dashboard/billing">Make a Payment</Link>
+            </Button>
+        </CardContent>
+      </Card>
+      
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <DeviceStatusCard
           title="Solar Panel Output"
           icon={Sun}
@@ -64,18 +81,6 @@ export default function DashboardPage() {
           value="Online"
           description="System functioning normally"
         />
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-medium">Grace Period</CardTitle>
-            <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">2 days</div>
-            <p className="text-xs text-muted-foreground">
-              Remaining until auto-cutoff
-            </p>
-          </CardContent>
-        </Card>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">

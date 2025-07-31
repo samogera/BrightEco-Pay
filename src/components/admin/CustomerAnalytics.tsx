@@ -1,7 +1,7 @@
 
 'use client';
 
-import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Users, Wallet, TrendingUp } from 'lucide-react';
@@ -12,18 +12,22 @@ const complianceData = [
 ];
 
 const customerData = [
-    { month: 'Jan', revenue: 4000 },
-    { month: 'Feb', revenue: 3000 },
-    { month: 'Mar', revenue: 5000 },
-    { month: 'Apr', revenue: 4500 },
-    { month: 'May', revenue: 6000 },
-    { month: 'Jun', revenue: 5500 },
+    { month: 'Jan', revenue: 4000, signups: 20 },
+    { month: 'Feb', revenue: 3000, signups: 15 },
+    { month: 'Mar', revenue: 5000, signups: 30 },
+    { month: 'Apr', revenue: 4500, signups: 25 },
+    { month: 'May', revenue: 6000, signups: 35 },
+    { month: 'Jun', revenue: 5500, signups: 32 },
 ]
 
 const chartConfig = {
     revenue: {
       label: "Revenue (KES)",
       color: "hsl(var(--chart-1))",
+    },
+    signups: {
+      label: "New Signups",
+      color: "hsl(var(--chart-2))",
     },
 };
 
@@ -74,12 +78,12 @@ export function CustomerAnalytics() {
                     <CardTitle>Payment Compliance</CardTitle>
                     <CardDescription>Breakdown of customers by payment status.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex justify-center items-center">
                     <ChartContainer config={{}} className="w-full h-[250px]">
                         <ResponsiveContainer>
                             <PieChart>
                                 <ChartTooltip
-                                    cursor={false}
+                                    cursor={true}
                                     content={<ChartTooltipContent hideLabel />}
                                 />
                                 <Pie 
@@ -88,21 +92,23 @@ export function CustomerAnalytics() {
                                     nameKey="name" 
                                     cx="50%" 
                                     cy="50%" 
-                                    outerRadius={100} 
-                                    labelLine={false}
-                                    label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-                                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                                    innerRadius={60}
+                                    outerRadius={100}
+                                    strokeWidth={2}
+                                    label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
+                                        const radius = innerRadius + (outerRadius - innerRadius) * 1.3;
                                         const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
                                         const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
                                         return (
-                                            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central">
-                                                {`${(percent * 100).toFixed(0)}%`}
+                                            <text x={x} y={y} fill="currentColor" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-medium">
+                                                {`${name} (${(percent * 100).toFixed(0)}%)`}
                                             </text>
                                         );
                                     }}
+                                    labelLine={false}
                                 >
                                     {complianceData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                                        <Cell key={`cell-${index}`} fill={entry.fill} stroke={entry.fill} />
                                     ))}
                                 </Pie>
                             </PieChart>
@@ -112,8 +118,8 @@ export function CustomerAnalytics() {
             </Card>
             <Card className="lg:col-span-3">
                 <CardHeader>
-                    <CardTitle>Monthly Revenue</CardTitle>
-                    <CardDescription>Revenue generated over the last 6 months.</CardDescription>
+                    <CardTitle>Monthly Growth</CardTitle>
+                    <CardDescription>Revenue and new signups over the last 6 months.</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <ChartContainer config={chartConfig} className="w-full h-[250px]">
@@ -121,9 +127,12 @@ export function CustomerAnalytics() {
                             <BarChart data={customerData}>
                                 <CartesianGrid vertical={false} />
                                 <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
-                                <YAxis width={80} tickFormatter={(value) => `KES ${value / 1000}k`} />
+                                <YAxis yAxisId="left" width={60} tickFormatter={(value) => `K${value / 1000}`} />
+                                <YAxis yAxisId="right" orientation="right" width={40} />
                                 <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                                <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                                <Legend />
+                                <Bar yAxisId="left" dataKey="revenue" fill="var(--color-revenue)" radius={[4, 4, 0, 0]} name="Revenue" />
+                                <Bar yAxisId="right" dataKey="signups" fill="var(--color-signups)" radius={[4, 4, 0, 0]} name="Signups" />
                             </BarChart>
                         </ResponsiveContainer>
                     </ChartContainer>
