@@ -52,7 +52,7 @@ export default function FaqPage() {
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <Logo />
         <Button asChild>
-          <Link href="/login">Back to Login</Link>
+          <Link href="/">Back to Home</Link>
         </Button>
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
