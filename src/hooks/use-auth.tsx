@@ -15,25 +15,30 @@ import {
     RecaptchaVerifier,
     signInWithPhoneNumber,
     onAuthStateChanged,
+    User,
 } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
 export interface UserData {
   address?: string;
+  // Add any other user-specific data fields here
 }
 
 export const useAuth = () => {
   const { auth, user, setUser, loading } = useContext(AuthContext);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [isUserDataLoading, setIsUserDataLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
       setUserData(null);
+      setIsUserDataLoading(false);
       return;
     }
     
+    setIsUserDataLoading(true);
     const db = getFirestore(app);
     const userDocRef = doc(db, 'users', user.uid);
 
@@ -41,9 +46,12 @@ export const useAuth = () => {
       if (doc.exists()) {
         setUserData(doc.data() as UserData);
       } else {
-        // Handle case where user exists in Auth but not in Firestore
-        setUserData(null);
+        // This case can happen for users who signed up before the users collection was standard
+        // We can create a document for them here.
+        setDoc(userDocRef, {}); 
+        setUserData({});
       }
+       setIsUserDataLoading(false);
     });
 
     return () => unsubscribe();
@@ -53,6 +61,7 @@ export const useAuth = () => {
     if (!user) throw new Error("No user is signed in.");
     const db = getFirestore(app);
     const userDocRef = doc(db, 'users', user.uid);
+    // Use updateDoc for existing fields, or setDoc with merge for creating/updating
     await setDoc(userDocRef, data, { merge: true });
   }, [user]);
 
@@ -62,7 +71,9 @@ export const useAuth = () => {
 
   const signUpWithEmail = async (email: string, pass: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-    await updateUserData({}); // Create an empty user document in Firestore
+    // Create an empty user document in Firestore upon sign-up
+    const db = getFirestore(app);
+    await setDoc(doc(db, 'users', userCredential.user.uid), {});
     return userCredential;
   };
 
@@ -73,26 +84,27 @@ export const useAuth = () => {
     const userDocRef = doc(db, 'users', result.user.uid);
     const userDoc = await getDoc(userDocRef);
     if (!userDoc.exists()) {
-      await updateUserData({});
+      // Create user doc if it doesn't exist (first-time Google sign-in)
+      await setDoc(userDocRef, {
+        address: ''
+      });
     }
     return result;
   };
   
   const setupRecaptcha = (containerId: string) => {
     if (typeof window !== 'undefined') {
-        // Destroy the old verifier if it exists
         if ((window as any).recaptchaVerifier) {
             (window as any).recaptchaVerifier.clear();
         }
 
         (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
             'size': 'invisible',
-            'callback': (response: any) => {
-              console.log("reCAPTCHA solved");
+            'callback': () => {
+              // reCAPTCHA solved
             },
             'expired-callback': () => {
-                console.error("reCAPTCHA expired, please try again.");
-                if((window as any).recaptchaVerifier) {
+               if((window as any).recaptchaVerifier) {
                    (window as any).recaptchaVerifier.render().catch((err: any) => console.error("Recaptcha rerender failed", err));
                 }
             }
@@ -114,14 +126,20 @@ export const useAuth = () => {
     return firebaseSignout(auth);
   };
   
-  const updateUserProfile = async (profile: { displayName?: string, photoURL?: string }) => {
-    if (auth.currentUser) {
-        await updateProfile(auth.currentUser, profile);
-        const updatedUser = Object.assign(Object.create(Object.getPrototypeOf(auth.currentUser)), auth.currentUser);
-        setUser(updatedUser);
-        return auth.currentUser;
+  const updateUserProfileAndData = async (profile: { displayName?: string, photoURL?: string }, data?: Partial<UserData>) => {
+    if (!auth.currentUser) throw new Error("No user is signed in.");
+    
+    // Update Firebase Auth profile
+    await updateProfile(auth.currentUser, profile);
+
+    // Update the user state in the context to reflect changes immediately
+    const updatedUser = { ...auth.currentUser, ...profile } as User;
+    setUser(updatedUser);
+
+    // Update Firestore data
+    if (data) {
+      await updateUserData(data);
     }
-    throw new Error("No user is signed in.");
   }
   
   const updateUserAvatar = async (file: File) => {
@@ -130,7 +148,7 @@ export const useAuth = () => {
       const storageRef = ref(storage, `avatars/${auth.currentUser.uid}/${file.name}`);
       const snapshot = await uploadBytes(storageRef, file);
       const photoURL = await getDownloadURL(snapshot.ref);
-      await updateUserProfile({ photoURL });
+      await updateUserProfileAndData({ photoURL });
       return photoURL;
     }
     throw new Error("No user is signed in.");
@@ -138,14 +156,14 @@ export const useAuth = () => {
 
   return { 
     user, 
-    loading,
+    loading: loading || isUserDataLoading,
     userData, 
     signInWithEmail, 
     signUpWithEmail, 
     signInWithGoogle, 
     signInWithPhone,
     signOut,
-    updateUserProfile,
+    updateUserProfile: updateUserProfileAndData, // expose the combined function
     updateUserAvatar,
     updateUserData,
     };

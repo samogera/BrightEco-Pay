@@ -144,12 +144,14 @@ export default function BillingPage() {
     try {
       const result = await sendStkPush({ phone, amount: numericAmount });
       if (result.success) {
+        // In a real app, you'd wait for a webhook from the payment provider
+        // For this simulation, we'll process the payment immediately after the push is initiated
         await processPayment(numericAmount, 'M-Pesa', `STK Push to ${phone}`);
         setPhone('');
       } else {
         toast({
-          title: 'Payment Failed',
-          description: result.message || 'Could not initiate payment.',
+          title: 'M-Pesa Push Failed',
+          description: result.message || 'Could not initiate payment. Please try again.',
           variant: 'destructive',
         });
       }
@@ -184,14 +186,20 @@ export default function BillingPage() {
         toast({ title: 'Invalid CVC', description: 'Please enter a valid CVC.', variant: 'destructive' });
         return;
     }
-
+    
+    setLoading(true);
+    // Simulate payment gateway processing time
     await new Promise(resolve => setTimeout(resolve, 1500));
+    
     const last4 = cardNumber.slice(-4);
     await processPayment(numericAmount, 'Card', `Card ending in ${last4}`);
+    
+    // Clear card fields after successful payment
     setCardNumber('');
     setExpiryDate('');
     setCvc('');
     setCardType('');
+    setLoading(false);
   }
   
   const handlePayPalPayment = async () => {
@@ -201,18 +209,25 @@ export default function BillingPage() {
       return;
     }
     setLoading(true);
+    
+    toast({
+        title: 'Redirecting to PayPal...',
+        description: 'You are being redirected to complete your payment securely.'
+    });
+
+    // Simulate redirection and callback from PayPal
     setTimeout(async () => {
-        toast({
-            title: 'Redirecting to PayPal...',
-            description: 'You are being redirected to complete your payment securely.'
-        });
-        console.log("Redirecting to PayPal for payment of KES", numericAmount);
+        console.log("Simulating return from PayPal for payment of KES", numericAmount);
         await processPayment(numericAmount, 'PayPal', 'Transaction via PayPal');
         setLoading(false);
-    }, 1500)
+    }, 2500)
   }
 
   const handleWalletPayment = async () => {
+    if (balance <= 0) {
+      toast({ title: 'No outstanding balance', description: 'Your account is all paid up!', variant: 'default' });
+      return;
+    }
     const discount = 0.015; // 1.5%
     const discountedAmount = balance * (1 - discount);
     
@@ -287,18 +302,54 @@ export default function BillingPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                             <h3 className="text-lg font-medium mt-4">Payment Methods</h3>
-                            <div className="space-y-2">
-                                <Button className="w-full justify-between" onClick={handleMobileMoneyPayment} disabled={loading || !paymentAmount}>
-                                    Pay with M-Pesa <ChevronsRight/>
-                                </Button>
-                                 <Button className="w-full justify-between" onClick={handleCardPayment} disabled={loading || !paymentAmount}>
-                                    Pay with Card <ChevronsRight/>
-                                </Button>
-                                <Button className="w-full justify-between" onClick={handlePayPalPayment} disabled={loading || !paymentAmount}>
-                                    Proceed to PayPal <ChevronsRight/>
-                                </Button>
-                            </div>
+                            <h3 className="text-lg font-medium mt-4">Payment Methods</h3>
+                            <Tabs defaultValue="mpesa" className="w-full max-w-sm">
+                                <TabsList className="grid w-full grid-cols-3">
+                                    <TabsTrigger value="mpesa"><Smartphone /></TabsTrigger>
+                                    <TabsTrigger value="card"><CreditCard /></TabsTrigger>
+                                    <TabsTrigger value="paypal"><PayPalIcon /></TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="mpesa" className="mt-4 space-y-4">
+                                     <div className="space-y-2">
+                                        <Label htmlFor="phone">M-Pesa Number</Label>
+                                        <Input id="phone" type="tel" placeholder="+254712345678" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={loading} />
+                                     </div>
+                                     <Button className="w-full" onClick={handleMobileMoneyPayment} disabled={loading || !paymentAmount}>
+                                        {loading ? <Loader className="animate-spin" /> : 'Pay with M-Pesa'}
+                                    </Button>
+                                </TabsContent>
+                                <TabsContent value="card" className="mt-4 space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="card-number">Card Number</Label>
+                                        <div className="relative">
+                                            <Input id="card-number" placeholder="0000 0000 0000 0000" value={cardNumber} onChange={handleCardNumberChange} disabled={loading} className="pr-24"/>
+                                            <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
+                                                <Image src="https://placehold.co/32x20.png" width={32} height={20} alt="Visa" data-ai-hint="visa logo" className={cn(cardType === 'visa' ? 'opacity-100' : 'opacity-25')} />
+                                                <Image src="https://placehold.co/32x20.png" width={32} height={20} alt="Mastercard" data-ai-hint="mastercard logo" className={cn(cardType === 'mastercard' ? 'opacity-100' : 'opacity-25')} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="expiry-date">Expiry (MM/YY)</Label>
+                                            <Input id="expiry-date" placeholder="MM/YY" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} disabled={loading}/>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="cvc">CVC</Label>
+                                            <Input id="cvc" placeholder="123" value={cvc} onChange={(e) => setCvc(e.target.value)} disabled={loading}/>
+                                        </div>
+                                    </div>
+                                     <Button className="w-full" onClick={handleCardPayment} disabled={loading || !paymentAmount}>
+                                        {loading ? <Loader className="animate-spin" /> : 'Pay with Card'}
+                                    </Button>
+                                </TabsContent>
+                                <TabsContent value="paypal" className="mt-4 space-y-4">
+                                    <p className="text-sm text-muted-foreground text-center">You will be redirected to PayPal to complete your payment securely.</p>
+                                     <Button className="w-full" onClick={handlePayPalPayment} disabled={loading || !paymentAmount}>
+                                        {loading ? <Loader className="animate-spin" /> : <><PayPalIcon className="mr-2" /> Proceed to PayPal</>}
+                                    </Button>
+                                </TabsContent>
+                            </Tabs>
                         </div>
                     </div>
                     <Card className="bg-muted/30">
@@ -320,7 +371,7 @@ export default function BillingPage() {
                                 <p className="text-lg text-muted-foreground">Total to Pay</p>
                                 <p className="text-2xl font-bold">KES {(balance * 0.985).toFixed(2)}</p>
                             </div>
-                            <Button className="w-full mt-4" onClick={handleWalletPayment} disabled={loading || walletBalance < (balance * 0.985)}>
+                            <Button className="w-full mt-4" onClick={handleWalletPayment} disabled={loading || walletBalance < (balance * 0.985) || balance <= 0}>
                                 {loading ? <Loader className="animate-spin" /> : 'Pay Now From Wallet'}
                             </Button>
                         </CardContent>
@@ -361,4 +412,3 @@ export default function BillingPage() {
     </div>
   );
 }
-

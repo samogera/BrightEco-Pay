@@ -14,6 +14,9 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import Link from 'next/link';
+import { DateRange } from "react-day-picker"
+import { addDays as dateFnsAddDays, format } from 'date-fns';
+
 
 import {
   Card,
@@ -26,7 +29,7 @@ import { EnergyUsageChart } from '@/components/dashboard/EnergyUsageChart';
 import { Button } from '@/components/ui/button';
 import { useBilling } from '@/hooks/use-billing';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { differenceInDays, format } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { useState, useMemo } from 'react';
@@ -94,14 +97,19 @@ type TimeRange = 'Day' | 'Week' | 'Month' | 'Year';
 export default function DashboardPage() {
   const { balance, dueDate } = useBilling();
   const [activeRange, setActiveRange] = useState<TimeRange>('Day');
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: new Date(),
+  })
   
   const displayedDate = useMemo(() => {
-    if (activeRange === 'Day') return format(date || new Date(), 'MMMM dd, yyyy');
-    if (activeRange === 'Week') return `Week of ${format(date || new Date(), 'MMMM dd')}`;
-    if (activeRange === 'Month') return format(date || new Date(), 'MMMM yyyy');
-    if (activeRange === 'Year') return format(date || new Date(), 'yyyy');
-    return format(date || new Date(), 'PPP');
+    if (!date?.from) {
+      return 'Select a date range';
+    }
+    if (activeRange === 'Day' || !date.to || format(date.from, 'PPP') === format(date.to, 'PPP')) {
+      return format(date.from, 'MMMM dd, yyyy');
+    }
+    return `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}`;
   }, [date, activeRange]);
 
 
@@ -111,7 +119,7 @@ export default function DashboardPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `usage-report-${displayedDate}.${format}`;
+    a.download = `usage-report-${new Date().toISOString().split('T')[0]}.${format}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -171,10 +179,12 @@ export default function DashboardPage() {
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
-                                    mode="single"
+                                    initialFocus
+                                    mode="range"
+                                    defaultMonth={date?.from}
                                     selected={date}
                                     onSelect={setDate}
-                                    initialFocus
+                                    numberOfMonths={2}
                                 />
                                 </PopoverContent>
                             </Popover>
@@ -256,4 +266,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

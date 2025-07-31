@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/use-auth';
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  const { user, loading: authLoading, updateUserProfile, updateUserAvatar, updateUserData, userData } = useAuth();
+  const { user, loading: authLoading, updateUserProfile, updateUserAvatar, userData } = useAuth();
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -42,20 +42,30 @@ export default function ProfilePage() {
 
   const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setLoading(true);
+    
     try {
-        if (avatarFile) {
-            await updateUserAvatar(avatarFile);
-            setAvatarFile(null);
-        }
-        
-        if (name !== user?.displayName) {
-            await updateUserProfile({ displayName: name });
-        }
+      let photoURL = user.photoURL;
+      if (avatarFile) {
+        photoURL = await updateUserAvatar(avatarFile);
+        setAvatarFile(null);
+      }
+      
+      const profileUpdates: { displayName?: string, photoURL?: string } = {};
+      const dataUpdates: { address?: string } = {};
 
-        if (address !== userData?.address) {
-          await updateUserData({ address });
-        }
+      if (name !== user.displayName) {
+        profileUpdates.displayName = name;
+      }
+       if (photoURL !== user.photoURL) {
+        profileUpdates.photoURL = photoURL;
+      }
+      if (address !== (userData?.address || '')) {
+        dataUpdates.address = address;
+      }
+
+      await updateUserProfile(profileUpdates, dataUpdates);
         
       toast({
         title: 'Profile Updated',
