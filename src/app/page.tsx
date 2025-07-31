@@ -11,6 +11,7 @@ import {Logo} from '@/components/shared/Logo';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SolarSavingsCalculator } from '@/components/shared/SolarSavingsCalculator';
 
 const features = [
     {
@@ -56,13 +57,6 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 export default function Home() {
-    const [monthlyBill, setMonthlyBill] = useState(3000);
-    const yearlySavings = (monthlyBill * 12 * 0.3).toLocaleString('en-US', {
-        style: 'currency',
-        currency: 'KES',
-        minimumFractionDigits: 0,
-    });
-
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center sticky top-0 z-20 bg-background/80 backdrop-blur-md">
@@ -96,7 +90,12 @@ export default function Home() {
           </div>
         </section>
         
-        <section id="features" className="py-16 md:py-24 bg-background">
+        <section className="py-16 md:py-24">
+            <SolarSavingsCalculator />
+        </section>
+
+
+        <section id="features" className="py-16 md:py-24 bg-muted/30">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
                  <h2 className="font-headline text-3xl md:text-4xl font-bold mb-2 text-accent-foreground/90">
                     A Brighter Future for Your Home
@@ -122,7 +121,7 @@ export default function Home() {
             </div>
         </section>
 
-        <section className="bg-muted/30 py-16 md:py-24">
+        <section className="bg-background py-16 md:py-24">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
                <div className="relative h-80 lg:h-auto lg:aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl order-last lg:order-first">
@@ -152,50 +151,6 @@ export default function Home() {
           </div>
         </section>
         
-         <section className="py-16 md:py-24 bg-brand-gradient">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <Card className="bg-card/90 backdrop-blur-sm p-8 md:p-12 border-primary/20 shadow-lg">
-                     <div className="grid lg:grid-cols-2 gap-12 items-center">
-                        <div className="space-y-4 text-center lg:text-left">
-                             <h2 className="font-headline text-3xl md:text-4xl font-bold text-accent-foreground/90">Calculate Your Savings</h2>
-                            <p className="text-lg text-muted-foreground">See how much you could save by switching to BrightEco solar. Enter your current monthly electricity bill below.</p>
-                            <div className="space-y-2 !mt-6">
-                                <Label htmlFor="bill" className="font-semibold">Your Current Monthly Bill (KES)</Label>
-                                <Input 
-                                    id="bill" 
-                                    type="number" 
-                                    value={monthlyBill} 
-                                    onChange={(e) => setMonthlyBill(Number(e.target.value))} 
-                                    className="max-w-xs mx-auto lg:mx-0 text-lg p-4"
-                                />
-                            </div>
-                        </div>
-                        <div className="text-center rounded-2xl bg-primary/10 p-8 border-2 border-dashed border-primary/50">
-                            <p className="text-muted-foreground font-semibold">Potential Yearly Savings</p>
-                            <p className="text-4xl md:text-5xl font-bold text-primary my-2">{yearlySavings}</p>
-                            <p className="text-sm text-muted-foreground max-w-xs mx-auto">Based on an estimated 30% saving on your energy costs. Actual savings may vary.</p>
-                        </div>
-                    </div>
-                </Card>
-            </div>
-        </section>
-
-        <section className="py-16 md:py-24 bg-background">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 className="font-headline text-3xl md:text-4xl font-bold text-accent-foreground/90 mb-4">Manage Your BrightEco System on the Go</h2>
-                <p className="max-w-2xl mx-auto text-lg text-muted-foreground mb-8">Download our mobile app to track usage, make payments, and get support anytime, anywhere.</p>
-                <div className="flex justify-center items-center flex-wrap gap-4">
-                     <a href="#" className="inline-block transition-transform hover:scale-105">
-                        <Image src="https://logowik.com/content/uploads/images/google-play-store.jpg" width={180} height={60} alt="Get it on Google Play" />
-                     </a>
-                     <a href="#" className="inline-block transition-transform hover:scale-105">
-                        <Image src="https://logowik.com/content/uploads/images/app-store6550.jpg" width={180} height={60} alt="Download on the App Store" />
-                     </a>
-                </div>
-            </div>
-        </section>
-
-
          <section className="py-16 md:py-24 bg-muted/30">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
                  <h2 className="font-headline text-3xl md:text-4xl font-bold text-accent-foreground/90 mb-4">
