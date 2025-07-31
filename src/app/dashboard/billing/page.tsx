@@ -74,7 +74,7 @@ export default function BillingPage() {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [topUpAmount, setTopUpAmount] = useState('1000');
   const [phone, setPhone] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [processingMethod, setProcessingMethod] = useState<string | null>(null);
   
   // States for Add Card Dialog
   const [newCardNumber, setNewCardNumber] = useState('');
@@ -94,13 +94,13 @@ export default function BillingPage() {
   }, [user]);
 
   const getCardType = (cardNumber: string) => {
-    if (/^4/.test(cardNumber.replace(/\s/g, ''))) return 'visa';
-    if (/^5[1-5]/.test(cardNumber.replace(/\s/g, ''))) return 'mastercard';
-    return '';
+    if (/^4/.test(cardNumber.replace(/\s/g, ''))) return 'Visa';
+    if (/^5[1-5]/.test(cardNumber.replace(/\s/g, ''))) return 'Mastercard';
+    return 'Card';
   }
   
   const processPayment = async (amount: number, method: string, details: string) => {
-    setLoading(true);
+    setProcessingMethod(method);
     try {
         const newInvoice = await addInvoice({
             amount,
@@ -127,12 +127,12 @@ export default function BillingPage() {
             variant: 'destructive',
         });
     } finally {
-        setLoading(false);
+        setProcessingMethod(null);
     }
   }
   
   const processTopUp = async (amount: number, method: string) => {
-    setLoading(true);
+    setProcessingMethod('top-up');
     try {
         const newWalletBalance = await addToWallet(amount);
          toast({
@@ -151,7 +151,7 @@ export default function BillingPage() {
             variant: 'destructive',
         });
     } finally {
-        setLoading(false);
+        setProcessingMethod(null);
     }
   }
 
@@ -166,7 +166,7 @@ export default function BillingPage() {
       return;
     }
 
-    setLoading(true);
+    setProcessingMethod('mpesa');
     try {
       const result = await sendStkPush({ phone, amount: numericAmount });
       if (result.success) {
@@ -179,7 +179,7 @@ export default function BillingPage() {
       console.error('STK Push Error:', error);
       toast({ title: 'An Error Occurred', description: 'Failed to send payment prompt. Please try again later.', variant: 'destructive' });
     } finally {
-        setLoading(false);
+        setProcessingMethod(null);
     }
   };
 
@@ -190,12 +190,12 @@ export default function BillingPage() {
       return;
     }
     
-    setLoading(true);
+    setProcessingMethod(`card-${method.id}`);
     // Simulate payment gateway processing time
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     await processPayment(numericAmount, method.type, `Card ending in ${method.last4}`);
-    setLoading(false);
+    setProcessingMethod(null);
   }
   
   const handlePayPalPayment = async () => {
@@ -204,7 +204,7 @@ export default function BillingPage() {
       toast({ title: 'Invalid Amount', description: 'Please enter a valid amount.', variant: 'destructive' });
       return;
     }
-    setLoading(true);
+    setProcessingMethod('paypal');
     
     toast({ title: 'Redirecting to PayPal...', description: 'You are being redirected to complete your payment securely.' });
 
@@ -212,7 +212,7 @@ export default function BillingPage() {
     setTimeout(async () => {
         console.log("Simulating return from PayPal for payment of KES", numericAmount);
         await processPayment(numericAmount, 'PayPal', 'Transaction via PayPal');
-        setLoading(false);
+        setProcessingMethod(null);
     }, 2500)
   }
 
@@ -245,19 +245,21 @@ export default function BillingPage() {
         toast({ title: 'Invalid Name', description: 'Please enter the cardholder\'s name.', variant: 'destructive' }); return;
     }
 
-    setLoading(true);
+    setProcessingMethod('add-card');
     await addPaymentMethod({
-      type: getCardType(newCardNumber) || 'Card',
+      type: getCardType(newCardNumber),
       last4: newCardNumber.slice(-4),
       isPreferred: paymentMethods.length === 0,
     });
-    setLoading(false);
+    setProcessingMethod(null);
     setIsAddCardDialogOpen(false);
     setNewCardNumber('');
     setNewCardExpiry('');
     setNewCardCvc('');
     toast({ title: 'Payment Method Added', description: 'Your new card has been saved.' });
   }
+
+  const isLoading = !!processingMethod;
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8">
@@ -305,7 +307,7 @@ export default function BillingPage() {
             <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="pay-bill">Pay Bill</TabsTrigger>
                 <TabsTrigger value="top-up">Top Up Wallet</TabsTrigger>
-                <TabsTrigger value="methods">My Methods</TabsTrigger>
+                <TabsTrigger value="methods">My Cards</TabsTrigger>
             </TabsList>
             <TabsContent value="pay-bill" className="mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -313,31 +315,31 @@ export default function BillingPage() {
                          <h3 className="text-lg font-medium">Payment Amount</h3>
                         <div className="space-y-2">
                             <Label htmlFor="amount">Amount to Pay (KES)</Label>
-                            <Input id="amount" type="number" placeholder="Enter amount" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} disabled={loading} className="max-w-xs" />
+                            <Input id="amount" type="number" placeholder="Enter amount" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} disabled={isLoading} className="max-w-xs" />
                         </div>
                         <div className="space-y-4">
                             <h3 className="text-lg font-medium mt-4">Pay With</h3>
                              <div className="space-y-2">
                                 <Label htmlFor="phone">M-Pesa</Label>
                                 <div className="flex gap-2">
-                                    <Input id="phone" type="tel" placeholder="+254712345678" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={loading} />
-                                    <Button onClick={handleMobileMoneyPayment} disabled={loading || !paymentAmount}>
-                                        {loading ? <Loader className="animate-spin" /> : 'Pay'}
+                                    <Input id="phone" type="tel" placeholder="+254712345678" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={isLoading} />
+                                    <Button onClick={handleMobileMoneyPayment} disabled={isLoading || !paymentAmount}>
+                                        {processingMethod === 'mpesa' ? <Loader className="animate-spin" /> : 'Pay'}
                                     </Button>
                                 </div>
                              </div>
                              {paymentMethods.filter(pm => pm.type !== 'M-Pesa').map(pm => (
                                 <div key={pm.id} className="space-y-2">
                                     <Label>{pm.type} ending in {pm.last4}</Label>
-                                     <Button className="w-full" onClick={() => handleCardPayment(pm)} disabled={loading || !paymentAmount}>
-                                        {loading ? <Loader className="animate-spin" /> : <>Pay with this {pm.type}</>}
+                                     <Button className="w-full" onClick={() => handleCardPayment(pm)} disabled={isLoading || !paymentAmount}>
+                                        {processingMethod === `card-${pm.id}` ? <Loader className="animate-spin" /> : <>Pay with this {pm.type}</>}
                                     </Button>
                                 </div>
                              ))}
                              <div className="space-y-2">
                                  <Label>PayPal</Label>
-                                 <Button variant="outline" className="w-full" onClick={handlePayPalPayment} disabled={loading || !paymentAmount}>
-                                    {loading ? <Loader className="animate-spin" /> : <><PayPalIcon className="mr-2" /> Proceed to PayPal</>}
+                                 <Button variant="outline" className="w-full" onClick={handlePayPalPayment} disabled={isLoading || !paymentAmount}>
+                                    {processingMethod === 'paypal' ? <Loader className="animate-spin" /> : <><PayPalIcon className="mr-2" /> Proceed to PayPal</>}
                                 </Button>
                              </div>
                         </div>
@@ -349,8 +351,8 @@ export default function BillingPage() {
                              <div className="space-y-2 mt-2"><p className="text-sm text-muted-foreground">Discount (1.5%)</p><p className="font-bold text-primary">- KES {(balance * 0.015).toFixed(2)}</p></div>
                             <Separator className="my-3"/>
                             <div className="space-y-2"><p className="text-lg text-muted-foreground">Total to Pay</p><p className="text-2xl font-bold">KES {(balance * 0.985).toFixed(2)}</p></div>
-                            <Button className="w-full mt-4" onClick={handleWalletPayment} disabled={loading || walletBalance < (balance * 0.985) || balance <= 0}>
-                                {loading ? <Loader className="animate-spin" /> : 'Pay Now From Wallet'}
+                            <Button className="w-full mt-4" onClick={handleWalletPayment} disabled={isLoading || walletBalance < (balance * 0.985) || balance <= 0}>
+                                {processingMethod === 'wallet' ? <Loader className="animate-spin" /> : 'Pay Now From Wallet'}
                             </Button>
                         </CardContent>
                     </Card>
@@ -362,10 +364,10 @@ export default function BillingPage() {
                      <p className="text-muted-foreground">Add funds to your wallet using any payment method. You can use your wallet balance to pay for your bills with a discount.</p>
                      <div className="space-y-2 text-left">
                         <Label htmlFor="top-up-amount">Amount to Add (KES)</Label>
-                        <Input id="top-up-amount" type="number" value={topUpAmount} onChange={(e) => setTopUpAmount(e.target.value)} disabled={loading} />
+                        <Input id="top-up-amount" type="number" value={topUpAmount} onChange={(e) => setTopUpAmount(e.target.value)} disabled={isLoading} />
                     </div>
-                     <Button className="w-full" disabled={loading || !topUpAmount || Number(topUpAmount) <= 0} onClick={() => processTopUp(Number(topUpAmount), 'M-Pesa/Card')}>
-                        {loading ? <Loader className="animate-spin" /> : `Top Up KES ${topUpAmount}`}
+                     <Button className="w-full" disabled={isLoading || !topUpAmount || Number(topUpAmount) <= 0} onClick={() => processTopUp(Number(topUpAmount), 'M-Pesa/Card')}>
+                        {processingMethod === 'top-up' ? <Loader className="animate-spin" /> : `Top Up KES ${topUpAmount}`}
                     </Button>
                 </div>
             </TabsContent>
@@ -373,12 +375,12 @@ export default function BillingPage() {
                  <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
-                            <CardTitle>My Payment Methods</CardTitle>
-                            <CardDescription>Add or remove your bank accounts and debit cards.</CardDescription>
+                            <CardTitle>My Payment Cards</CardTitle>
+                            <CardDescription>Add, remove, or set your preferred card for payments.</CardDescription>
                         </div>
                         <Dialog open={isAddCardDialogOpen} onOpenChange={setIsAddCardDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button><PlusCircle className="mr-2" /> Add New</Button>
+                                <Button><PlusCircle className="mr-2" /> Add New Card</Button>
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-[425px]">
                                 <DialogHeader><DialogTitle>Add a new card</DialogTitle><DialogDescription>Your card information is stored securely.</DialogDescription></DialogHeader>
@@ -391,21 +393,21 @@ export default function BillingPage() {
                                     </div>
                                 </div>
                                 <DialogFooter>
-                                    <Button type="submit" onClick={handleAddCard} disabled={loading}>{loading ? <Loader className="animate-spin" /> : "Save Card"}</Button>
+                                    <Button type="submit" onClick={handleAddCard} disabled={isLoading}>{processingMethod === 'add-card' ? <Loader className="animate-spin" /> : "Save Card"}</Button>
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {paymentMethods.length > 0 ? paymentMethods.map(method => (
-                            <div key={method.id} className="flex items-center justify-between p-3 rounded-md border bg-muted/20">
+                        {paymentMethods.filter(m => m.type !== 'M-Pesa').length > 0 ? paymentMethods.map(method => (
+                            <div key={method.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
                                 <div className="flex items-center gap-4">
                                     {method.type.toLowerCase() === 'visa' && <Image src="https://placehold.co/40x25.png" width={40} height={25} alt="Visa" data-ai-hint="visa logo" />}
                                     {method.type.toLowerCase() === 'mastercard' && <Image src="https://placehold.co/40x25.png" width={40} height={25} alt="Mastercard" data-ai-hint="mastercard logo" />}
-                                    {method.type.toLowerCase() === 'mpesa' && <Smartphone />}
+                                    {method.type.toLowerCase() === 'card' && <CreditCard className="h-6 w-6 text-muted-foreground" />}
                                     <div>
                                         <p className="font-semibold">{method.type} ending in •••• {method.last4}</p>
-                                        {method.isPreferred && <span className="text-xs text-primary font-medium">Preferred</span>}
+                                        {method.isPreferred && <Badge variant="default" className="mt-1">Preferred</Badge>}
                                     </div>
                                 </div>
                                 {!method.isPreferred && (
@@ -413,7 +415,7 @@ export default function BillingPage() {
                                 )}
                             </div>
                         )) : (
-                            <p className="text-muted-foreground text-center py-4">No payment methods saved.</p>
+                            <p className="text-muted-foreground text-center py-4">No cards saved.</p>
                         )}
                     </CardContent>
                 </Card>
