@@ -71,7 +71,7 @@ const submitTicketFlow = ai.defineFlow(
     try {
         const docRef = await addDoc(ticketsCollection, {
             to: 'robinsonoolakak@gmail.com',
-            subject: 'BrightEco Energy',
+            subject: 'BrightEco Energy Support Request',
             body: emailBody,
             userDetails: {
                 name: input.name,
@@ -101,5 +101,3 @@ const submitTicketFlow = ai.defineFlow(
     }
   }
 );
-
-    

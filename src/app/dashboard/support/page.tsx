@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { LifeBuoy, Phone, MessageSquare, MapPin, Loader, FileText, Send, Sparkles } from "lucide-react";
+import { LifeBuoy, Phone, MessageSquare, MapPin, Loader, FileText, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -58,10 +58,13 @@ export default function SupportPage() {
       if (result.success) {
          toast({
           title: "Ticket Submitted Successfully!",
-          description: "Your request has been stored. It will be reviewed and emailed manually.",
+          description: result.message,
         });
         // Reset form if needed
-        (e.target as HTMLFormElement).reset();
+        const form = e.target as HTMLFormElement;
+        form.reset();
+        // Since name/email/phone are controlled, we don't reset them
+        // so they stay pre-filled for the next ticket.
       } else {
          toast({
           title: "Submission Failed",
@@ -83,48 +86,38 @@ export default function SupportPage() {
   return (
     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <Card className="border-2 border-amber-300/50 shadow-amber-500/10">
-          <CardHeader className="flex-row gap-4 items-start">
-             <div className="p-2 bg-amber-400/20 rounded-md">
-                 <Sparkles className="h-6 w-6 text-amber-500" />
-            </div>
-            <div>
-                <CardTitle className="font-headline text-xl text-amber-900 dark:text-amber-300">Premium Support Request</CardTitle>
-                <CardDescription className="text-amber-800/80 dark:text-amber-300/80">
-                  Submit a ticket and our team will get back to you. Your user details are pre-filled.
-                </CardDescription>
-            </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline text-xl">Get in Touch</CardTitle>
+            <CardDescription>
+              Have a question or need help? Fill out the form below and our team will get back to you shortly.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-6" onSubmit={handleSubmit}>
-                <div className="space-y-2">
-                  <Label htmlFor="subject">Subject</Label>
-                  <Input id="subject" name="subject" value="BrightEco Energy Support" readOnly className="bg-muted/70 cursor-not-allowed"/>
-                </div>
-                 <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input id="title" name="title" placeholder="e.g., Payment Inquiry, System Offline" required />
-                </div>
-
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" name="name" value={name} onChange={e => setName(e.target.value)} required />
+                  <Input id="name" name="name" value={name} onChange={e => setName(e.target.value)} required disabled={loading} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" name="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                  <Input id="email" name="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required disabled={loading} />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" name="phone" value={phone} onChange={e => setPhone(e.target.value)} />
+                <Label htmlFor="phone">Phone Number (Optional)</Label>
+                <Input id="phone" name="phone" value={phone} onChange={e => setPhone(e.target.value)} disabled={loading} />
               </div>
+               <div className="space-y-2">
+                  <Label htmlFor="title">Subject</Label>
+                  <Input id="title" name="title" placeholder="e.g., Payment Inquiry, System Offline" required disabled={loading} />
+                </div>
               <div className="space-y-2">
                 <Label htmlFor="message">Message</Label>
-                <Textarea id="message" name="message" placeholder="Describe your issue or request in detail..." rows={5} required/>
+                <Textarea id="message" name="message" placeholder="Describe your issue or request in detail..." rows={5} required disabled={loading}/>
               </div>
-              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 w-full">
+              <Button type="submit" disabled={loading} className="w-full">
                 {loading ? <><Loader className="animate-spin mr-2" /> Submitting...</> : <><Send className="mr-2"/> Submit Ticket</>}
               </Button>
             </form>
@@ -183,5 +176,3 @@ export default function SupportPage() {
     </div>
   );
 }
-
-    
