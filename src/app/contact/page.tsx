@@ -13,6 +13,7 @@ import Link from "next/link";
 import { submitTicket } from "@/ai/flows/submit-ticket";
 import { Logo } from "@/components/shared/Logo";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LoadingLogo } from "@/components/shared/LoadingLogo";
 
 export default function ContactPage() {
   const { toast } = useToast();
@@ -151,7 +152,7 @@ export default function ContactPage() {
                         <Textarea id="message" name="message" placeholder="Tell us about your energy needs..." rows={5} required disabled={loading}/>
                       </div>
                       <Button type="submit" disabled={loading} className="w-full">
-                        {loading ? <><Loader className="animate-spin mr-2" /> Sending...</> : <><Send className="mr-2"/> Send Message</>}
+                        {loading ? <LoadingLogo /> : <><Send className="mr-2"/> Send Message</>}
                       </Button>
                     </form>
                   </CardContent>

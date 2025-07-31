@@ -97,3 +97,18 @@
        @apply bg-gradient-to-b from-green-950/30 to-background;
   }
 }
+
+@layer utilities {
+  @keyframes zoom-in-out {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+  }
+
+  .animate-zoom-in-out {
+    animation: zoom-in-out 2s ease-in-out infinite;
+  }
+}

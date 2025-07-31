@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { User, Mail, Phone, MapPin, Upload, Loader } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { LoadingLogo } from '@/components/shared/LoadingLogo';
 
 export default function ProfilePage() {
   const { toast } = useToast();
@@ -82,7 +83,7 @@ export default function ProfilePage() {
   }
 
   if (authLoading || !user) {
-    return <div className="flex items-center justify-center h-full"><Loader className="animate-spin h-10 w-10 text-primary" /></div>
+    return <div className="flex items-center justify-center h-full"><LoadingLogo /></div>
   }
   
   const avatarSrc = avatarPreview || `https://ui-avatars.com/api/?name=${name || email}&background=primary&color=primary-foreground`;
@@ -162,7 +163,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex justify-end gap-2 mt-6">
                 <Button type="submit" disabled={loading}>
-                    {loading ? <Loader className="animate-spin" /> : 'Save Changes'}
+                    {loading ? <LoadingLogo /> : 'Save Changes'}
                 </Button>
             </div>
           </form>

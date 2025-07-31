@@ -10,6 +10,7 @@ import {Card, CardContent, CardHeader, CardTitle, CardDescription} from '@/compo
 import {Label} from '@/components/ui/label';
 import {Slider} from '@/components/ui/slider';
 import {useToast} from '@/hooks/use-toast';
+import { LoadingLogo } from '@/components/shared/LoadingLogo';
 
 export function AdminDashboard() {
   const {toast} = useToast();
@@ -126,7 +127,7 @@ export function AdminDashboard() {
           </div>
           <Button onClick={handleSubmit} disabled={loading} className="w-full">
             {loading ? (
-              <Loader className="animate-spin" />
+              <LoadingLogo />
             ) : (
               <>
               <FileText className="mr-2 h-4 w-4" />
@@ -154,7 +155,7 @@ export function AdminDashboard() {
         <CardContent className="prose prose-sm dark:prose-invert max-w-none">
           {loading && (
             <div className="flex items-center justify-center p-8">
-              <Loader className="h-8 w-8 animate-spin text-primary" />
+              <LoadingLogo />
             </div>
           )}
           {insights ? (

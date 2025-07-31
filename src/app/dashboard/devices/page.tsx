@@ -12,6 +12,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { getDeviceAdvice } from '@/ai/flows/get-device-advice';
 import { useToast } from '@/hooks/use-toast';
 import { useNotifications } from '@/hooks/use-notifications';
+import { LoadingLogo } from '@/components/shared/LoadingLogo';
 
 const devices = [
   {
@@ -129,13 +130,13 @@ export default function DevicesPage() {
                     </CardDescription>
                 </div>
                 <Button onClick={handleGetAdvice} disabled={loadingAdvice}>
-                    {loadingAdvice ? <Loader className="animate-spin" /> : 'Analyze System'}
+                    {loadingAdvice ? <LoadingLogo /> : 'Analyze System'}
                 </Button>
               </CardHeader>
               <CardContent className="prose prose-sm dark:prose-invert max-w-none">
                   {loadingAdvice && (
                       <div className="flex items-center justify-center p-6">
-                          <Loader className="h-8 w-8 animate-spin text-primary" />
+                          <LoadingLogo />
                       </div>
                   )}
                   {advice ? (

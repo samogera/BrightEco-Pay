@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingLogo } from '@/components/shared/LoadingLogo';
 
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -162,7 +163,7 @@ export default function SignupPage() {
                 <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={loading} />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? <Loader className="animate-spin" /> : 'Create Account with Email'}
+                {loading ? <LoadingLogo /> : 'Create Account with Email'}
               </Button>
             </form>
           </TabsContent>
@@ -173,7 +174,7 @@ export default function SignupPage() {
                  <div className="flex gap-2">
                     <Input id="mobile" type="tel" placeholder="+254 712 345 678" required value={phone} onChange={(e) => setPhone(e.target.value)} disabled={loading || !!confirmationResult} />
                     <Button type="button" variant="outline" onClick={handleSendCode} disabled={loading || !!confirmationResult}>
-                        {loading ? <Loader className="animate-spin"/> : 'Send Code'}
+                        {loading ? <LoadingLogo /> : 'Send Code'}
                     </Button>
                 </div>
               </div>
@@ -182,7 +183,7 @@ export default function SignupPage() {
                 <Input id="code" type="text" placeholder="Enter 6-digit code" required value={code} onChange={(e) => setCode(e.target.value)} disabled={loading || !confirmationResult} />
               </div>
               <Button type="submit" className="w-full" disabled={loading || !confirmationResult}>
-                 {loading ? <Loader className="animate-spin" /> : 'Create Account with Phone'}
+                 {loading ? <LoadingLogo /> : 'Create Account with Phone'}
               </Button>
             </form>
           </TabsContent>
@@ -197,7 +198,7 @@ export default function SignupPage() {
         </div>
 
         <Button variant="outline" className="w-full" onClick={handleGoogleSignup} disabled={loading}>
-          {loading ? <Loader className="animate-spin" /> : <><GoogleIcon className="mr-2" />Sign up with Google</>}
+          {loading ? <LoadingLogo /> : <><GoogleIcon className="mr-2" />Sign up with Google</>}
         </Button>
       </CardContent>
       <CardFooter className="flex-col gap-4 mt-4">

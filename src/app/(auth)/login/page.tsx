@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingLogo } from '@/components/shared/LoadingLogo';
 
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -151,7 +152,7 @@ export default function LoginPage() {
                 <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                 {loading ? <Loader className="animate-spin" /> : 'Login with Email'}
+                 {loading ? <LoadingLogo /> : 'Login with Email'}
               </Button>
             </form>
           </TabsContent>
@@ -162,7 +163,7 @@ export default function LoginPage() {
                 <div className="flex gap-2">
                     <Input id="mobile" type="tel" placeholder="+254 712 345 678" required value={phone} onChange={(e) => setPhone(e.target.value)} disabled={loading || !!confirmationResult} />
                     <Button type="button" variant="outline" onClick={handleSendCode} disabled={loading || !!confirmationResult}>
-                        {loading ? <Loader className="animate-spin"/> : 'Send Code'}
+                        {loading ? <LoadingLogo /> : 'Send Code'}
                     </Button>
                 </div>
               </div>
@@ -171,7 +172,7 @@ export default function LoginPage() {
                 <Input id="code" type="text" placeholder="Enter 6-digit code" required value={code} onChange={(e) => setCode(e.target.value)} disabled={loading || !confirmationResult} />
               </div>
               <Button type="submit" className="w-full" disabled={loading || !confirmationResult}>
-                {loading ? <Loader className="animate-spin" /> : 'Login with Phone'}
+                {loading ? <LoadingLogo /> : 'Login with Phone'}
               </Button>
             </form>
           </TabsContent>
@@ -187,7 +188,7 @@ export default function LoginPage() {
         </div>
 
         <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={loading}>
-            {loading ? <Loader className="animate-spin" /> : <><GoogleIcon className="mr-2" /> Sign in with Google</>}
+            {loading ? <LoadingLogo /> : <><GoogleIcon className="mr-2" /> Sign in with Google</>}
         </Button>
       </CardContent>
       <CardFooter className="flex flex-col gap-4 mt-4">

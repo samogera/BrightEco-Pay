@@ -46,6 +46,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { LoadingLogo } from '@/components/shared/LoadingLogo';
 
 
 function PayPalIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -300,7 +301,7 @@ export default function BillingPage() {
       <CardContent className="space-y-6">
         {billingLoading ? (
             <div className="flex justify-center items-center h-48">
-                <Loader className="animate-spin text-primary" />
+                <LoadingLogo />
             </div>
         ) : (
         <>
@@ -349,7 +350,7 @@ export default function BillingPage() {
                                 <div className="flex gap-2">
                                     <Input id="phone" type="tel" placeholder="+254712345678" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={isLoading} />
                                     <Button onClick={handleMobileMoneyPayment} disabled={isLoading || !paymentAmount}>
-                                        {processingMethod === 'mpesa' ? <Loader className="animate-spin" /> : 'Pay'}
+                                        {processingMethod === 'mpesa' ? <LoadingLogo /> : 'Pay'}
                                     </Button>
                                 </div>
                              </div>
@@ -357,14 +358,14 @@ export default function BillingPage() {
                                 <div key={pm.id} className="space-y-2">
                                     <Label>{pm.type} ending in {pm.last4}</Label>
                                      <Button className="w-full" onClick={() => handleCardPayment(pm)} disabled={isLoading || !paymentAmount}>
-                                        {processingMethod === `card-${pm.id}` ? <Loader className="animate-spin" /> : <>Pay with this {pm.type}</>}
+                                        {processingMethod === `card-${pm.id}` ? <LoadingLogo /> : <>Pay with this {pm.type}</>}
                                     </Button>
                                 </div>
                              ))}
                              <div className="space-y-2">
                                  <Label>PayPal</Label>
                                  <Button variant="outline" className="w-full" onClick={handlePayPalPayment} disabled={isLoading || !paymentAmount}>
-                                    {processingMethod === 'paypal' ? <Loader className="animate-spin" /> : <><PayPalIcon className="mr-2" /> Proceed to PayPal</>}
+                                    {processingMethod === 'paypal' ? <LoadingLogo /> : <><PayPalIcon className="mr-2" /> Proceed to PayPal</>}
                                 </Button>
                              </div>
                         </div>
@@ -377,7 +378,7 @@ export default function BillingPage() {
                             <Separator className="my-3"/>
                             <div className="space-y-2"><p className="text-lg text-muted-foreground">Total to Pay</p><p className="text-2xl font-bold">KES {(balance * 0.985).toFixed(2)}</p></div>
                             <Button className="w-full mt-4" onClick={handleWalletPayment} disabled={isLoading || walletBalance < (balance * 0.985) || balance <= 0}>
-                                {processingMethod === 'wallet' ? <Loader className="animate-spin" /> : 'Pay Now From Wallet'}
+                                {processingMethod === 'wallet' ? <LoadingLogo /> : 'Pay Now From Wallet'}
                             </Button>
                         </CardContent>
                     </Card>
@@ -392,7 +393,7 @@ export default function BillingPage() {
                         <Input id="top-up-amount" type="number" value={topUpAmount} onChange={(e) => setTopUpAmount(e.target.value)} disabled={isLoading} />
                     </div>
                      <Button className="w-full" disabled={isLoading || !topUpAmount || Number(topUpAmount) <= 0} onClick={() => processTopUp(Number(topUpAmount), 'M-Pesa/Card')}>
-                        {processingMethod === 'top-up' ? <Loader className="animate-spin" /> : `Top Up KES ${topUpAmount}`}
+                        {processingMethod === 'top-up' ? <LoadingLogo /> : `Top Up KES ${topUpAmount}`}
                     </Button>
                 </div>
             </TabsContent>
@@ -418,7 +419,7 @@ export default function BillingPage() {
                                     </div>
                                 </div>
                                 <DialogFooter>
-                                    <Button type="submit" onClick={handleAddCard} disabled={isLoading}>{processingMethod === 'add-card' ? <Loader className="animate-spin" /> : "Save Card"}</Button>
+                                    <Button type="submit" onClick={handleAddCard} disabled={isLoading}>{processingMethod === 'add-card' ? <LoadingLogo /> : "Save Card"}</Button>
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
@@ -442,7 +443,7 @@ export default function BillingPage() {
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" disabled={isLoading}>
-                                            {processingMethod === `delete-${method.id}` ? <Loader className="animate-spin h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                                            {processingMethod === `delete-${method.id}` ? <LoadingLogo className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
                                         </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>

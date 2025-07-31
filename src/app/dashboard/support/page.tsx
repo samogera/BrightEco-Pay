@@ -13,6 +13,7 @@ import Link from "next/link";
 import { submitTicket } from "@/ai/flows/submit-ticket";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LoadingLogo } from "@/components/shared/LoadingLogo";
 
 
 export default function SupportPage() {
@@ -146,7 +147,7 @@ export default function SupportPage() {
                 <Textarea id="message" name="message" placeholder="Describe your issue or request in detail..." rows={5} required disabled={loading}/>
               </div>
               <Button type="submit" disabled={loading} className="w-full">
-                {loading ? <><Loader className="animate-spin mr-2" /> Submitting...</> : <><Send className="mr-2"/> Submit Ticket</>}
+                {loading ? <LoadingLogo /> : <><Send className="mr-2"/> Submit Ticket</>}
               </Button>
             </form>
           </CardContent>

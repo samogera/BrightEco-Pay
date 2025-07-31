@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
+import { LoadingLogo } from "@/components/shared/LoadingLogo";
 
 
 export default function SettingsPage() {
@@ -135,7 +136,7 @@ export default function SettingsPage() {
                                     disabled={isDeleting}
                                     className="bg-destructive hover:bg-destructive/90"
                                 >
-                                    {isDeleting ? <Loader className="animate-spin" /> : "Yes, delete account"}
+                                    {isDeleting ? <LoadingLogo /> : "Yes, delete account"}
                                 </AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>

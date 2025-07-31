@@ -53,6 +53,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useNotifications } from '@/hooks/use-notifications';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
+import { LoadingLogo } from '@/components/shared/LoadingLogo';
 
 
 const menuItems = [
@@ -90,9 +91,7 @@ export default function DashboardLayout({children}: PropsWithChildren) {
   if (loading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="animate-pulse">
-            <Logo />
-        </div>
+        <LoadingLogo />
       </div>
     );
   }

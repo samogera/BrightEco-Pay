@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Check, Bell, Loader, CreditCard, Sun, Wallet } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { LoadingLogo } from '@/components/shared/LoadingLogo';
 
 const iconMap: { [key in Notification['type']]: React.ElementType } = {
     payment: CreditCard,
@@ -37,7 +38,7 @@ export default function NotificationsPage() {
                 <CardContent className="p-0">
                     {loading ? (
                         <div className="flex justify-center items-center h-48">
-                            <Loader className="animate-spin text-primary" />
+                            <LoadingLogo />
                         </div>
                     ) : notifications.length > 0 ? (
                         <ul className="divide-y">

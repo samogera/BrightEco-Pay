@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader } from 'lucide-react';
+import { LoadingLogo } from "@/components/shared/LoadingLogo";
 
 
 export default function AdminLoginPage() {
@@ -71,7 +72,7 @@ export default function AdminLoginPage() {
                         </CardContent>
                         <CardFooter className="flex flex-col gap-4">
                             <Button className="w-full" type="submit" disabled={loading}>
-                                {loading ? <Loader className="animate-spin" /> : 'Login to Admin Dashboard'}
+                                {loading ? <LoadingLogo /> : 'Login to Admin Dashboard'}
                             </Button>
                               <p className="text-sm text-muted-foreground">
                                 Are you a user?{' '}

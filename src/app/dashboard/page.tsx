@@ -44,6 +44,7 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { getDeviceAdvice } from '@/ai/flows/get-device-advice';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingLogo } from '@/components/shared/LoadingLogo';
 
 
 function GracePeriodAlert() {
@@ -363,7 +364,7 @@ ${aiAdvice}
                        <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" disabled={reportLoading}>
-                              {reportLoading ? <Loader className="animate-spin mr-2" /> : <Download className="mr-2 h-4 w-4" />} 
+                              {reportLoading ? <LoadingLogo /> : <Download className="mr-2 h-4 w-4" />} 
                               Download Report
                             </Button>
                           </DropdownMenuTrigger>
