@@ -4,7 +4,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { addDays, addMonths } from 'date-fns';
 import { useAuth } from './use-auth';
-import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, Timestamp, runTransaction } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, Timestamp, runTransaction, DocumentReference } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
 const MOCK_MONTHLY_FEE = 2550;
@@ -28,8 +28,8 @@ interface BillingContextType extends BillingState {
   invoices: Invoice[];
   loading: boolean;
   makePayment: (amount: number) => Promise<void>;
-  addInvoice: (invoice: Omit<Invoice, 'id' | 'date'>) => Promise<void>;
-  addToWallet: (amount: number) => Promise<void>;
+  addInvoice: (invoice: Omit<Invoice, 'id' | 'date'>) => Promise<DocumentReference>;
+  addToWallet: (amount: number) => Promise<number>;
 }
 
 const BillingContext = createContext<BillingContextType | undefined>(undefined);
@@ -94,7 +94,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     if (!user) throw new Error("User not authenticated");
     const db = getFirestore(app);
     const invoicesColRef = collection(db, 'billing', user.uid, 'invoices');
-    await addDoc(invoicesColRef, {
+    return await addDoc(invoicesColRef, {
         ...invoiceData,
         date: serverTimestamp(),
     });
@@ -105,6 +105,8 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
     if (amount <= 0) throw new Error("Top-up amount must be positive.");
     const db = getFirestore(app);
     const billingDocRef = doc(db, 'billing', user.uid);
+    
+    let newWalletBalance = 0;
 
     await runTransaction(db, async (transaction) => {
         const billingDoc = await transaction.get(billingDocRef);
@@ -112,10 +114,11 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
             throw new Error("Billing document does not exist!");
         }
         const currentWallet = billingDoc.data().walletBalance || 0;
-        const newWallet = currentWallet + amount;
-        transaction.update(billingDocRef, { walletBalance: newWallet });
+        newWalletBalance = currentWallet + amount;
+        transaction.update(billingDocRef, { walletBalance: newWalletBalance });
     });
 
+    return newWalletBalance;
   }, [user]);
 
   const makePayment = useCallback(async (amount: number) => {
@@ -133,13 +136,25 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
         
         const data = billingDoc.data();
         const currentBalance = data.balance;
-        const currentDueDate = (data.dueDate as Timestamp).toDate();
+        const currentDueDate = (data.dueDate as Timestamp)?.toDate() || new Date();
+        const currentWalletBalance = data.walletBalance || 0;
 
-        const newBalance = currentBalance - amount;
-        let newDueDate = currentDueDate || new Date();
+        let newBalance = currentBalance;
+        let newDueDate = currentDueDate;
+        let newWalletBalance = currentWalletBalance;
+        
+        let amountToProcess = amount;
+
+        // Determine if payment is from wallet
+        const isWalletPayment = amount === currentBalance; // Simplified assumption for this logic
+        if (isWalletPayment && currentWalletBalance >= amount) {
+            newWalletBalance -= amount;
+        }
+
+        newBalance -= amountToProcess;
 
         if (newBalance < currentBalance) {
-             const monthsPaid = Math.floor(amount / MOCK_MONTHLY_FEE);
+             const monthsPaid = Math.floor(amountToProcess / MOCK_MONTHLY_FEE);
              if (monthsPaid > 0) {
                  newDueDate = addMonths(newDueDate, monthsPaid);
              }
@@ -154,6 +169,7 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
         transaction.update(billingDocRef, { 
             balance: Math.max(0, newBalance),
             dueDate: newDueDate,
+            walletBalance: newWalletBalance
         });
     });
 

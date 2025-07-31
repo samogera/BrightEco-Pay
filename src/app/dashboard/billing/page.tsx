@@ -24,6 +24,7 @@ import { useBilling } from '@/hooks/use-billing';
 import { sendStkPush } from '@/ai/flows/send-stk-push';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
+import { useNotifications } from '@/hooks/use-notifications';
 
 function PayPalIcon(props: React.SVGProps<SVGSVGElement>) {
     return (
@@ -48,6 +49,7 @@ export default function BillingPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { balance, dueDate, makePayment, addInvoice, loading: billingLoading, walletBalance, addToWallet } = useBilling();
+  const { addNotification } = useNotifications();
   const [paymentAmount, setPaymentAmount] = useState('');
   const [topUpAmount, setTopUpAmount] = useState('1000');
   const [phone, setPhone] = useState('');
@@ -65,11 +67,19 @@ export default function BillingPage() {
   }, [user]);
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const number = e.target.value.replace(/\s/g, '');
-    setCardNumber(e.target.value);
-    if (/^4/.test(number)) {
+    const value = e.target.value.replace(/\D/g, '');
+    let formattedValue = '';
+    for (let i = 0; i < value.length; i++) {
+        if (i > 0 && i % 4 === 0) {
+            formattedValue += ' ';
+        }
+        formattedValue += value[i];
+    }
+    setCardNumber(formattedValue.trim());
+
+    if (/^4/.test(value)) {
         setCardType('visa');
-    } else if (/^5[1-5]/.test(number)) {
+    } else if (/^5[1-5]/.test(value)) {
         setCardType('mastercard');
     } else {
         setCardType('');
@@ -79,17 +89,23 @@ export default function BillingPage() {
   const processPayment = async (amount: number, method: string, details: string) => {
     setLoading(true);
     try {
-        await makePayment(amount);
-        await addInvoice({
+        const newInvoice = await addInvoice({
             amount,
             method,
             status: 'Paid',
             details,
         });
+        await makePayment(amount);
          toast({
             title: 'Payment Successful',
             description: `Your ${method} payment of KES ${amount} has been processed.`,
         });
+        await addNotification({
+            type: 'payment',
+            title: 'Payment Received',
+            description: `Successfully processed KES ${amount.toFixed(2)} via ${method}. Invoice ID: ${newInvoice.id}`,
+            link: `/dashboard/billing/history#${newInvoice.id}`,
+        })
         setPaymentAmount('');
     } catch(err: any) {
         toast({
@@ -105,10 +121,15 @@ export default function BillingPage() {
   const processTopUp = async (amount: number, method: string) => {
     setLoading(true);
     try {
-        await addToWallet(amount);
+        const newWalletBalance = await addToWallet(amount);
          toast({
             title: 'Wallet Top-Up Successful',
             description: `KES ${amount} has been added to your Solar Wallet via ${method}.`,
+        });
+        await addNotification({
+            type: 'wallet',
+            title: 'Wallet Top-Up',
+            description: `KES ${amount.toFixed(2)} added. New balance is KES ${newWalletBalance.toFixed(2)}.`,
         });
     } catch(err: any) {
         toast({
@@ -174,11 +195,11 @@ export default function BillingPage() {
       return;
     }
     
-    if (cardNumber.replace(/\s/g, '').length < 15 || cardNumber.replace(/\s/g, '').length > 16) {
+    if (cardNumber.replace(/\s/g, '').length < 15 || cardNumber.replace(/\s/g, '').length > 19) {
         toast({ title: 'Invalid Card Number', description: 'Please enter a valid card number.', variant: 'destructive' });
         return;
     }
-    if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
+    if (!/^\d{2}\s*\/\s*\d{2}$/.test(expiryDate)) {
         toast({ title: 'Invalid Expiry Date', description: 'Please use MM/YY format.', variant: 'destructive' });
         return;
     }
@@ -332,7 +353,7 @@ export default function BillingPage() {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="expiry-date">Expiry (MM/YY)</Label>
-                                            <Input id="expiry-date" placeholder="MM/YY" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} disabled={loading}/>
+                                            <Input id="expiry-date" placeholder="MM / YY" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} disabled={loading}/>
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="cvc">CVC</Label>
@@ -399,7 +420,7 @@ export default function BillingPage() {
             </TabsContent>
          </Tabs>
 
-        <Separator className="mt-8"/>
+        <Separator className="my-8"/>
          <div className="flex justify-end">
              <Button variant="outline" asChild>
               <Link href="/dashboard/billing/history">View Payment History</Link>

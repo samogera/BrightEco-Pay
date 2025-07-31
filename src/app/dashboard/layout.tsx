@@ -17,6 +17,7 @@ import {
   Loader,
   Bell,
   BookOpen,
+  Check,
 } from 'lucide-react';
 import type {PropsWithChildren} from 'react';
 
@@ -49,6 +50,9 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import React from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useNotifications } from '@/hooks/use-notifications';
+import { cn } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
 
 
 const menuItems = [
@@ -59,18 +63,12 @@ const menuItems = [
   {href: '/dashboard/support', label: 'Support', icon: LifeBuoy},
 ];
 
-const notifications = [
-    { title: "Payment Due Soon", description: "Your next payment of KES 2,550 is due in 5 days.", time: "5m ago" },
-    { title: "Device Offline", description: "Solar Panel Array B is offline. Please check connections.", time: "1h ago" },
-    { title: "Payment Received", description: "Your payment of KES 1,000 has been successfully processed.", time: "yesterday" },
-];
-
-
 export default function DashboardLayout({children}: PropsWithChildren) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { user, loading, signOut } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { toast } = useToast();
 
   const handleSignOut = async () => {
@@ -170,26 +168,52 @@ export default function DashboardLayout({children}: PropsWithChildren) {
              <h1 className="font-headline text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h1>
              <Popover>
                 <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" aria-label="Notifications">
+                    <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
                          <Bell className="h-5 w-5" />
+                         {unreadCount > 0 && (
+                            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-destructive" />
+                         )}
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80" align="end">
-                    <div className="p-4">
-                        <h4 className="font-medium text-sm">Notifications</h4>
-                         <div className="mt-4 space-y-4">
-                            {notifications.map((notification, index) => (
-                                <div key={index} className="grid grid-cols-[25px_1fr] items-start pb-4 last:pb-0">
-                                    <span className="flex h-2 w-2 translate-y-1.5 rounded-full bg-primary" />
+                <PopoverContent className="w-80 p-0" align="end">
+                    <div className="p-4 border-b">
+                        <div className="flex justify-between items-center">
+                            <h4 className="font-medium text-sm">Notifications</h4>
+                            {unreadCount > 0 && (
+                                <Button variant="link" size="sm" className="p-0 h-auto" onClick={markAllAsRead}>
+                                    Mark all as read
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                     <div className="p-2 max-h-80 overflow-y-auto">
+                        {notifications.length > 0 ? (
+                            notifications.map((notification) => (
+                                <div key={notification.id} className={cn("grid grid-cols-[25px_1fr] items-start p-2 rounded-md hover:bg-accent", !notification.isRead && "bg-primary/10")}>
+                                    <span className={cn("flex h-2 w-2 translate-y-1.5 rounded-full", !notification.isRead ? "bg-primary" : "bg-transparent")} />
                                     <div className="grid gap-1">
                                         <p className="font-medium text-sm">{notification.title}</p>
                                         <p className="text-xs text-muted-foreground">{notification.description}</p>
-                                        <p className="text-xs text-muted-foreground">{notification.time}</p>
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-xs text-muted-foreground">{formatDistanceToNow(notification.timestamp, { addSuffix: true })}</p>
+                                            {!notification.isRead && (
+                                                <Button variant="outline" size="sm" className="h-6 px-1.5" onClick={() => markAsRead(notification.id)}>
+                                                    <Check className="h-3 w-3" />
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
-                         </div>
-                    </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-muted-foreground text-center p-4">No new notifications.</p>
+                        )}
+                     </div>
+                      <div className="p-2 border-t text-center">
+                          <Button variant="link" size="sm" className="w-full" asChild>
+                            <Link href="/dashboard/notifications">View all notifications</Link>
+                          </Button>
+                     </div>
                 </PopoverContent>
              </Popover>
               <Button

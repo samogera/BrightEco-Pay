@@ -11,6 +11,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, PieCha
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { getDeviceAdvice } from '@/ai/flows/get-device-advice';
 import { useToast } from '@/hooks/use-toast';
+import { useNotifications } from '@/hooks/use-notifications';
 
 const devices = [
   {
@@ -40,7 +41,7 @@ const devices = [
     {
     id: 'DEV004',
     name: 'Solar Panel Array B',
-    type: 'Solar Panel',
+    type: 'Offline',
     status: 'Offline',
     icon: Sun,
     metrics: { output: 0, efficiency: 0 },
@@ -58,6 +59,7 @@ const chartConfig = {
 
 export default function DevicesPage() {
     const { toast } = useToast();
+    const { addNotification } = useNotifications();
     const [loadingAdvice, setLoadingAdvice] = useState(false);
     const [advice, setAdvice] = useState<string | null>(null);
 
@@ -68,6 +70,19 @@ export default function DevicesPage() {
             const devicesForApi = devices.map(({ icon, ...rest }) => rest);
             const result = await getDeviceAdvice({ devices: devicesForApi });
             setAdvice(result.advice);
+            
+            // Check for offline devices and create notifications
+            devices.forEach(device => {
+                if (device.status === 'Offline') {
+                    addNotification({
+                        type: 'device',
+                        title: 'Device Offline',
+                        description: `${device.name} is currently offline. Please check connections.`,
+                        link: '/dashboard/devices'
+                    });
+                }
+            });
+
         } catch (error) {
             console.error('Error getting device advice:', error);
             toast({

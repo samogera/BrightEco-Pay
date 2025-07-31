@@ -5,6 +5,7 @@ import {Toaster} from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/shared/ThemeProvider';
 import { AuthProvider } from '@/components/shared/AuthProvider';
 import { BillingProvider } from '@/hooks/use-billing';
+import { NotificationsProvider } from '@/hooks/use-notifications';
 
 export const metadata: Metadata = {
   title: 'BrightEco Pay',
@@ -38,10 +39,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <BillingProvider>
-              {children}
-              <Toaster />
-            </BillingProvider>
+            <NotificationsProvider>
+              <BillingProvider>
+                {children}
+                <Toaster />
+              </BillingProvider>
+            </NotificationsProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
