@@ -73,11 +73,13 @@ export const BillingProvider = ({ children }: { children: ReactNode }) => {
         const userInvoices: Invoice[] = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            userInvoices.push({
-                id: doc.id,
-                ...data,
-                date: (data.date as Timestamp).toDate(),
-            } as Invoice);
+            if (data.date) { // Check if the date field is not null
+                userInvoices.push({
+                    id: doc.id,
+                    ...data,
+                    date: (data.date as Timestamp).toDate(),
+                } as Invoice);
+            }
         });
         setInvoices(userInvoices);
     });
