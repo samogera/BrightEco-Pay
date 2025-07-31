@@ -203,7 +203,7 @@ export default function SupportPage() {
           </CardHeader>
           <CardContent>
              <Button variant="outline" asChild>
-                <Link href="/faq" target="_blank">Visit FAQ Page</Link>
+                <Link href="/dashboard/faq">Visit FAQ Page</Link>
              </Button>
           </CardContent>
         </Card>

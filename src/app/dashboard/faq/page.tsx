@@ -9,9 +9,6 @@ import {
 } from '@/components/ui/accordion';
 import { Card, CardContent } from '@/components/ui/card';
 import { HelpCircle } from 'lucide-react';
-import { Logo } from '@/components/shared/Logo';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 
 const faqItems = [
@@ -51,41 +48,33 @@ export default function FaqPage() {
   const router = useRouter();
 
   return (
-    <div className="bg-brand-gradient min-h-screen">
-      <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <Logo />
-        <Button onClick={() => router.back()}>Back to Previous Page</Button>
-      </header>
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-                <HelpCircle className="mx-auto h-12 w-12 text-primary mb-4" />
-                <h1 className="font-headline text-3xl md:text-4xl font-bold">
-                Frequently Asked Questions
-                </h1>
-                <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-                Find quick answers to common questions about your BrightEco solar system, billing, and account.
-                </p>
-            </div>
-
-          <Card>
-            <CardContent className="p-6">
-              <Accordion type="single" collapsible className="w-full">
-                {faqItems.map((item, index) => (
-                  <AccordionItem key={index} value={`item-${index}`}>
-                    <AccordionTrigger className="text-left font-semibold hover:no-underline">
-                      {item.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-muted-foreground">
-                      {item.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </CardContent>
-          </Card>
+    <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+            <HelpCircle className="mx-auto h-12 w-12 text-primary mb-4" />
+            <h1 className="font-headline text-3xl md:text-4xl font-bold">
+            Frequently Asked Questions
+            </h1>
+            <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
+            Find quick answers to common questions about your BrightEco solar system, billing, and account.
+            </p>
         </div>
-      </main>
+
+      <Card>
+        <CardContent className="p-6">
+          <Accordion type="single" collapsible className="w-full">
+            {faqItems.map((item, index) => (
+              <AccordionItem key={index} value={`item-${index}`}>
+                <AccordionTrigger className="text-left font-semibold hover:no-underline">
+                  {item.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  {item.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </CardContent>
+      </Card>
     </div>
   );
 }

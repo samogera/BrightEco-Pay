@@ -177,7 +177,7 @@ export default function Home() {
                   <ul className="space-y-1 text-muted-foreground">
                       <li><Link href="/login" className="hover:text-primary">User Login</Link></li>
                       <li><Link href="/admin/login" className="hover:text-primary">Admin Login</Link></li>
-                      <li><Link href="/faq" className="hover:text-primary">FAQ</Link></li>
+                      <li><Link href="/dashboard/faq" className="hover:text-primary">FAQ</Link></li>
                       <li><Link href="/contact" className="hover:text-primary">Contact</Link></li>
                   </ul>
               </div>
