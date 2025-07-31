@@ -6,14 +6,12 @@ import {
   BatteryFull,
   Sun,
   Zap,
-  BookOpen,
 } from 'lucide-react';
 import Link from 'next/link';
 
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -51,16 +49,16 @@ function DeviceStatusCard({
 }
 
 function GracePeriodAlert() {
-  const { dueDate } = useBilling();
+  const { balance, dueDate } = useBilling();
   const daysRemaining = differenceInDays(dueDate, new Date());
 
-  if (daysRemaining > 10) {
+  if (daysRemaining > 10 || balance <= 0) {
     return null;
   }
 
   const alertVariant = daysRemaining <= 5 ? 'destructive' : 'warning';
-  const alertTitle = daysRemaining <= 5 ? 'Critical: Service Interruption Soon' : 'Payment Reminder';
-  const alertMessage = `Your account is currently in a grace period. To avoid service interruption, please make a payment. Your service is due on ${format(dueDate, 'MMMM dd, yyyy')}.`;
+  const alertTitle = daysRemaining <= 0 ? 'Service Interruption: Payment Overdue' : (daysRemaining <= 5 ? 'Critical: Service Interruption Soon' : 'Payment Reminder');
+  const alertMessage = daysRemaining <= 0 ? `Your payment is overdue. Please pay now to restore service.` : `Your service is due on ${format(dueDate, 'MMMM dd, yyyy')}. To avoid interruption, please make a payment.`;
 
   return (
     <Alert variant={alertVariant} className={cn(
@@ -100,10 +98,10 @@ export default function DashboardPage() {
           description="20.1 hours of backup"
         />
         <DeviceStatusCard
-          title="Classroom Lighting"
-          icon={BookOpen}
-          value="8 Hours"
-          description="Total lighting provided today"
+          title="Home Power Usage"
+          icon={Zap}
+          value="1.2 kWh"
+          description="Current consumption"
         />
         <DeviceStatusCard
           title="System Status"
@@ -120,7 +118,7 @@ export default function DashboardPage() {
               Energy Usage
             </CardTitle>
             <CardDescription>
-              Your school's consumption over the last 6 months.
+              Your household consumption over the last 6 months.
             </CardDescription>
           </CardHeader>
           <CardContent>

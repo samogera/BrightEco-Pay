@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/use-auth';
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  const { user, updateUserProfile, updateUserAvatar } = useAuth();
+  const { user, loading: authLoading, updateUserProfile, updateUserAvatar } = useAuth();
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -30,7 +30,7 @@ export default function ProfilePage() {
         setName(user.displayName || '');
         setEmail(user.email || '');
         setPhone(user.phoneNumber || '');
-        setAvatar(user.photoURL || `https://placehold.co/100x100.png?text=${(user.displayName || 'U').charAt(0)}`);
+        setAvatar(user.photoURL || `https://placehold.co/100x100.png?text=${(user.displayName || user.email || 'U').charAt(0)}`);
     }
   }, [user]);
 
@@ -38,12 +38,14 @@ export default function ProfilePage() {
     e.preventDefault();
     setLoading(true);
     try {
+        let photoURL = user?.photoURL;
         if (avatarFile) {
-            const photoURL = await updateUserAvatar(avatarFile);
-            await updateUserProfile({ displayName: name, photoURL });
-            setAvatar(photoURL);
+            photoURL = await updateUserAvatar(avatarFile);
+            setAvatar(photoURL!);
             setAvatarFile(null);
-        } else {
+        }
+        
+        if (name !== user?.displayName) {
             await updateUserProfile({ displayName: name });
         }
         
@@ -53,24 +55,25 @@ export default function ProfilePage() {
       });
     } catch(error: any) {
         toast({ title: 'Update Failed', description: error.message, variant: 'destructive' });
+    } finally {
+        setLoading(false);
     }
-    setLoading(false);
   };
   
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatar(reader.result as string);
-        setAvatarFile(file);
       };
       reader.readAsDataURL(file);
     }
   }
 
-  if (!user) {
-    return <div className="flex items-center justify-center"><Loader className="animate-spin" /></div>
+  if (authLoading || !user) {
+    return <div className="flex items-center justify-center h-full"><Loader className="animate-spin h-10 w-10 text-primary" /></div>
   }
 
   return (
@@ -86,7 +89,7 @@ export default function ProfilePage() {
                 <div className="relative">
                 <Avatar className="h-24 w-24">
                     <AvatarImage src={avatar} alt={name} data-ai-hint="user avatar" />
-                    <AvatarFallback>{name.charAt(0) || 'U'}</AvatarFallback>
+                    <AvatarFallback>{name.charAt(0) || email.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
                 <Button asChild size="icon" className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full">
                     <Label htmlFor="avatar-upload">
@@ -94,10 +97,10 @@ export default function ProfilePage() {
                         <span className="sr-only">Upload Avatar</span>
                     </Label>
                 </Button>
-                <Input id="avatar-upload" type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} />
+                <Input id="avatar-upload" type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={loading} />
                 </div>
                 <div className="text-center md:text-left">
-                <h2 className="text-2xl font-bold">{name}</h2>
+                <h2 className="text-2xl font-bold">{name || 'New User'}</h2>
                 <p className="text-muted-foreground">{email}</p>
                 <p className="text-muted-foreground">{phone}</p>
                 </div>
@@ -110,7 +113,7 @@ export default function ProfilePage() {
                     <Label htmlFor="name">Full Name</Label>
                     <div className="flex items-center gap-2">
                         <User className="text-muted-foreground" />
-                        <Input id="name" value={name} onChange={e => setName(e.target.value)} />
+                        <Input id="name" value={name} onChange={e => setName(e.target.value)} disabled={loading} />
                     </div>
                 </div>
                 <div className="space-y-2">
@@ -131,7 +134,7 @@ export default function ProfilePage() {
                     <Label htmlFor="address">Physical Address</Label>
                     <div className="flex items-center gap-2">
                         <MapPin className="text-muted-foreground" />
-                        <Input id="address" value={address} onChange={e => setAddress(e.target.value)} />
+                        <Input id="address" value={address} onChange={e => setAddress(e.target.value)} disabled={loading} />
                     </div>
                 </div>
             </div>

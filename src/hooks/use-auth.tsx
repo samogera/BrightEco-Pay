@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import {
   AuthContext
 } from '@/components/shared/AuthProvider';
@@ -14,12 +14,21 @@ import {
     updateProfile,
     RecaptchaVerifier,
     signInWithPhoneNumber,
+    onAuthStateChanged,
 } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { app } from '@/lib/firebase';
 
 export const useAuth = () => {
-  const { auth, user, loading } = useContext(AuthContext);
+  const { auth, user, setUser, loading } = useContext(AuthContext);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, [auth, setUser]);
+
 
   const signInWithEmail = (email: string, pass: string) => {
     return signInWithEmailAndPassword(auth, email, pass);
@@ -37,20 +46,26 @@ export const useAuth = () => {
   const setupRecaptcha = (containerId: string) => {
     if (typeof window !== 'undefined') {
         const verifierId = `recaptcha-verifier-${containerId}`;
-        if ((window as any)[verifierId]) {
-            return (window as any)[verifierId];
+        // Avoid re-creating the verifier if it already exists.
+        if ((window as any).recaptchaVerifier) {
+            return (window as any).recaptchaVerifier;
         }
 
-        (window as any)[verifierId] = new RecaptchaVerifier(auth, containerId, {
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
             'size': 'invisible',
             'callback': (response: any) => {
               console.log("reCAPTCHA solved");
             },
             'expired-callback': () => {
-                console.error("reCAPTCHA expired");
+                console.error("reCAPTCHA expired, please try again.");
+                if((window as any).recaptchaVerifier) {
+                    (window as any).recaptchaVerifier.render().then((widgetId: any) => {
+                        (window as any).recaptchaVerifier.reset(widgetId);
+                    });
+                }
             }
         });
-        return (window as any)[verifierId];
+        return (window as any).recaptchaVerifier;
     }
     return null;
   }
@@ -70,11 +85,9 @@ export const useAuth = () => {
   const updateUserProfile = async (profile: { displayName?: string, photoURL?: string }) => {
     if (auth.currentUser) {
         await updateProfile(auth.currentUser, profile);
-        // This is a common pattern to force a state refresh in the AuthProvider
-        // by re-triggering the onAuthStateChanged listener with the updated user.
-        // As we don't have direct access to the setter, this is a workaround.
-        // A better approach would be a dedicated state management library.
-        return {...auth.currentUser};
+        // Manually update the user in our context to trigger a re-render
+        setUser({...auth.currentUser});
+        return auth.currentUser;
     }
     throw new Error("No user is signed in.");
   }
@@ -85,7 +98,7 @@ export const useAuth = () => {
       const storageRef = ref(storage, `avatars/${auth.currentUser.uid}/${file.name}`);
       const snapshot = await uploadBytes(storageRef, file);
       const photoURL = await getDownloadURL(snapshot.ref);
-      await updateProfile(auth.currentUser, { photoURL });
+      await updateUserProfile({ photoURL }); // Update profile with new URL
       return photoURL;
     }
     throw new Error("No user is signed in.");

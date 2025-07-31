@@ -23,13 +23,13 @@ export function BillingInfoCard() {
           Billing & Payments
         </CardTitle>
         <CardDescription>
-          View your school's current balance and make termly payments.
+          View your current balance and make payments.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 flex-grow flex flex-col justify-between">
         <div className="space-y-4">
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Current Term Balance</p>
+              <p className="text-sm text-muted-foreground">Current Balance</p>
               <p className="text-3xl font-bold">KES {balance.toFixed(2)}</p>
             </div>
              <div className="space-y-1">

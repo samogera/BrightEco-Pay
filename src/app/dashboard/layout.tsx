@@ -15,7 +15,6 @@ import {
   Moon,
   Sun,
   Loader,
-  BookOpen
 } from 'lucide-react';
 import type {PropsWithChildren} from 'react';
 
@@ -53,7 +52,6 @@ const menuItems = [
   {href: '/dashboard/devices', label: 'Devices', icon: Smartphone},
   {href: '/dashboard/billing', label: 'Billing', icon: CreditCard},
   {href: '/dashboard/profile', label: 'Profile', icon: User},
-  {href: '/dashboard/education', label: 'Education', icon: BookOpen},
   {href: '/dashboard/support', label: 'Support', icon: LifeBuoy},
 ];
 
