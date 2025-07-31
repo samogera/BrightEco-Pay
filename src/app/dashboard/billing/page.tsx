@@ -49,10 +49,15 @@ export default function BillingPage() {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvc, setCvc] = useState('');
   const [cardType, setCardType] = useState('');
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const number = e.target.value;
+    const number = e.target.value.replace(/\s/g, '');
+    setCardNumber(e.target.value);
     if (/^4/.test(number)) {
         setCardType('visa');
     } else if (/^5[1-5]/.test(number)) {
@@ -77,25 +82,6 @@ export default function BillingPage() {
         description: `Your ${method} payment of KES ${amount} has been processed.`,
     });
     setPaymentAmount('');
-  }
-
-
-  const handleGenericPayment = (amount: number, method: string) => {
-    setLoading(true);
-    // Simulate API call delay
-    setTimeout(() => {
-        try {
-            processPayment(amount, method, 'Card ending in 1234');
-        } catch (error: any) {
-             toast({
-                title: 'Payment Failed',
-                description: error.message,
-                variant: 'destructive',
-            });
-        } finally {
-            setLoading(false);
-        }
-    }, 1500)
   }
 
   const handleMobileMoneyPayment = async () => {
@@ -148,7 +134,41 @@ export default function BillingPage() {
       toast({ title: 'Invalid Amount', description: 'Please enter a valid amount.', variant: 'destructive' });
       return;
     }
-    handleGenericPayment(numericAmount, 'Card');
+    
+    // Basic validation
+    if (cardNumber.replace(/\s/g, '').length < 15 || cardNumber.replace(/\s/g, '').length > 16) {
+        toast({ title: 'Invalid Card Number', description: 'Please enter a valid card number.', variant: 'destructive' });
+        return;
+    }
+    if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
+        toast({ title: 'Invalid Expiry Date', description: 'Please use MM/YY format.', variant: 'destructive' });
+        return;
+    }
+     if (!/^\d{3,4}$/.test(cvc)) {
+        toast({ title: 'Invalid CVC', description: 'Please enter a valid CVC.', variant: 'destructive' });
+        return;
+    }
+
+    setLoading(true);
+    // Simulate API call delay
+    setTimeout(() => {
+        try {
+            const last4 = cardNumber.slice(-4);
+            processPayment(numericAmount, 'Card', `Card ending in ${last4}`);
+            setCardNumber('');
+            setExpiryDate('');
+            setCvc('');
+            setCardType('');
+        } catch (error: any) {
+             toast({
+                title: 'Payment Failed',
+                description: error.message,
+                variant: 'destructive',
+            });
+        } finally {
+            setLoading(false);
+        }
+    }, 1500)
   }
   
   const handlePayPalPayment = () => {
@@ -241,7 +261,7 @@ export default function BillingPage() {
                 <div className="space-y-2">
                     <Label htmlFor="card-number">Card Number</Label>
                      <div className="relative">
-                        <Input id="card-number" placeholder="0000 0000 0000 0000" disabled={loading} className="pr-24" onChange={handleCardNumberChange} />
+                        <Input id="card-number" placeholder="0000 0000 0000 0000" disabled={loading} className="pr-24" value={cardNumber} onChange={handleCardNumberChange} />
                          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
                             <Image src="https://placehold.co/32x20.png" width={32} height={20} alt="Visa" data-ai-hint="visa logo" className={cn(cardType === 'visa' ? 'opacity-100' : 'opacity-50')} />
                             <Image src="https://placehold.co/32x20.png" width={32} height={20} alt="Mastercard" data-ai-hint="mastercard logo" className={cn(cardType === 'mastercard' ? 'opacity-100' : 'opacity-50')} />
@@ -251,11 +271,11 @@ export default function BillingPage() {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="expiry">Expiry Date</Label>
-                        <Input id="expiry" placeholder="MM/YY" disabled={loading} />
+                        <Input id="expiry" placeholder="MM/YY" disabled={loading} value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="cvc">CVC</Label>
-                        <Input id="cvc" placeholder="123" disabled={loading} />
+                        <Input id="cvc" placeholder="123" disabled={loading} value={cvc} onChange={(e) => setCvc(e.target.value)} />
                     </div>
                 </div>
                 <Button className="w-full sm:w-auto" onClick={handleCardPayment} disabled={loading || !paymentAmount}>
