@@ -16,6 +16,7 @@ import {
   Sun,
   Loader,
   Bell,
+  BookOpen,
 } from 'lucide-react';
 import type {PropsWithChildren} from 'react';
 
@@ -53,7 +54,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 const menuItems = [
   {href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard},
   {href: '/dashboard/devices', label: 'Devices', icon: Smartphone},
-  {href: ' /dashboard/billing', label: 'Billing', icon: CreditCard},
+  {href: '/dashboard/billing', label: 'Billing', icon: CreditCard},
+  {href: '/dashboard/education', label: 'Education', icon: BookOpen},
   {href: '/dashboard/profile', label: 'Profile', icon: User},
   {href: '/dashboard/support', label: 'Support', icon: LifeBuoy},
 ];

@@ -4,6 +4,9 @@
 import {
   AlertTriangle,
   BatteryFull,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   Sun,
   Zap,
 } from 'lucide-react';
@@ -22,6 +25,7 @@ import { useBilling } from '@/hooks/use-billing';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { differenceInDays, format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 
 function GracePeriodAlert() {
@@ -58,6 +62,13 @@ function GracePeriodAlert() {
   );
 }
 
+const usageStats = [
+    { title: 'Daily Total', value: '61.40 kWh', estimate: 'KES 750' },
+    { title: 'Weekly Total', value: '193 kWh', estimate: 'KES 2,350' },
+    { title: 'Monthly Total', value: '321 kWh', estimate: 'KES 3,900' },
+    { title: 'Yearly Total', value: '7,368 kWh', estimate: 'KES 89,500' },
+]
+
 export default function DashboardPage() {
   const { balance, dueDate } = useBilling();
   
@@ -70,15 +81,50 @@ export default function DashboardPage() {
         <div className="lg:col-span-2">
             <Card className="h-full">
                 <CardHeader>
-                    <CardTitle className="font-headline text-xl text-golden">
-                    Your Energy Dashboard
+                    <CardTitle className="font-headline text-xl">
+                      Usage
                     </CardTitle>
-                    <CardDescription>
-                    Real-time insights into your energy consumption.
-                    </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        {usageStats.map(stat => (
+                            <div key={stat.title} className="p-4 rounded-lg bg-muted/50">
+                                <p className="text-sm text-muted-foreground">{stat.title}</p>
+                                <p className="text-xl font-bold">{stat.value}</p>
+                                <p className="text-xs text-muted-foreground">{stat.estimate}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-1">
+                            <Button variant="default" size="sm">Day</Button>
+                            <Button variant="ghost" size="sm">Week</Button>
+                            <Button variant="ghost" size="sm">Month</Button>
+                            <Button variant="ghost" size="sm">Year</Button>
+                             <Button variant="outline" size="icon" className="h-9 w-9">
+                                <CalendarDays className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="icon" className="h-8 w-8">
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <span className="font-semibold text-sm">10 Jul, 2024</span>
+                            <Button variant="outline" size="icon" className="h-8 w-8">
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                    
+                    <Separator />
+
                     <EnergyUsageChart />
+
+                    <div className="flex justify-end">
+                        <Button variant="outline">Download Report</Button>
+                    </div>
+
                 </CardContent>
             </Card>
         </div>
@@ -88,10 +134,10 @@ export default function DashboardPage() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-base font-medium">Energy Credit Balance</CardTitle>
-                    <Zap className="h-5 w-5 text-golden" />
+                    <Zap className="h-5 w-5 text-primary" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-golden">KES {balance.toFixed(2)}</div>
+                    <div className="text-2xl font-bold text-primary">KES {balance.toFixed(2)}</div>
                     <p className="text-xs text-muted-foreground">
                         {dueDate ? `Next payment due on ${format(dueDate, 'MMM dd, yyyy')}` : 'No upcoming payment'}
                     </p>

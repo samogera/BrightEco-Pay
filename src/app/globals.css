@@ -4,99 +4,78 @@
 
 @layer base {
   :root {
-    --background: 222 84% 4%; /* Dark Slate Blue */
-    --foreground: 210 40% 98%;
-
-    --card: 222 84% 9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 84% 4%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 45 100% 51%; /* Gold */
-    --primary-foreground: 222 84% 4%;
-
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 28% 47%;
-
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 45 100% 51%;
-
+    --background: 0 0% 100%;
+    --foreground: 224 71.4% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+    --primary: 142.1 76.2% 36.3%;
+    --primary-foreground: 355.7 100% 97.3%;
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220 9.1% 43.1%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220 9.1% 43.1%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 142.1 76.2% 36.3%;
     --radius: 0.5rem;
 
-    --chart-1: 45 100% 51%; /* Gold */
-    --chart-2: 142 71% 45%; /* Green */
-    --chart-3: 210 40% 98%; /* Light Foreground */
+    --chart-1: 142.1 76.2% 36.3%; /* Green */
+    --chart-2: 210 40% 98%; /* Light Foreground */
+    --chart-3: 45 100% 51%; /* Gold */
     --chart-4: 217 33% 50%;
     --chart-5: 347 70% 54%;
 
-    --sidebar-background: 222 84% 4%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 45 100% 51%;
-    --sidebar-primary-foreground: 222 84% 4%;
-    --sidebar-accent: 222 84% 9%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 45 100% 51%;
-
-    --golden: 45 100% 51%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 224 71.4% 4.1%;
+    --sidebar-primary: 142.1 76.2% 36.3%;
+    --sidebar-primary-foreground: 355.7 100% 97.3%;
+    --sidebar-accent: 220 14.3% 95.9%;
+    --sidebar-accent-foreground: 220 9.1% 43.1%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 142.1 76.2% 36.3%;
   }
 
   .dark {
     --background: 222 84% 4%;
     --foreground: 210 40% 98%;
-
     --card: 222 84% 9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222 84% 4%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 45 100% 51%;
-    --primary-foreground: 222 84% 4%;
-
+    --primary: 142.1 76.2% 46.3%;
+    --primary-foreground: 355.7 100% 97.3%;
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217 33% 17%;
     --muted-foreground: 215 28% 47%;
-
     --accent: 217 33% 17%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217 33% 17%;
     --input: 217 33% 17%;
-    --ring: 45 100% 51%;
+    --ring: 142.1 76.2% 46.3%;
     
-    --chart-1: 45 100% 51%;
-    --chart-2: 142 65% 55%;
-    --chart-3: 210 40% 98%;
+    --chart-1: 142.1 76.2% 46.3%;
+    --chart-2: 210 40% 98%;
+    --chart-3: 45 100% 51%;
     --chart-4: 217 33% 50%;
     --chart-5: 347 70% 64%;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 150 100% 5%;
-    --sidebar-primary: 150 100% 10%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 140 80% 96%;
-    --sidebar-accent-foreground: 150 100% 10%;
-    --sidebar-border: 140 40% 90%;
-    --sidebar-ring: 142 65% 55%;
-
-    --golden: 45 100% 51%;
+    --sidebar-background: 222 84% 4%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 142.1 76.2% 46.3%;
+    --sidebar-primary-foreground: 355.7 100% 97.3%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 142.1 76.2% 46.3%;
   }
 }
 
@@ -108,10 +87,4 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-}
-
-@layer utilities {
-    .text-golden {
-        color: hsl(var(--golden));
-    }
 }
