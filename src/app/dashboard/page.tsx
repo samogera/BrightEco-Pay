@@ -123,8 +123,10 @@ export default function DashboardPage() {
               Your school's consumption over the last 6 months.
             </CardDescription>
           </CardHeader>
-          <CardContent className="pl-2">
-            <EnergyUsageChart />
+          <CardContent>
+            <div className="pl-2">
+                <EnergyUsageChart />
+            </div>
           </CardContent>
         </Card>
         <div className="col-span-full lg:col-span-3">
