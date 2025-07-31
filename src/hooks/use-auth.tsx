@@ -57,7 +57,7 @@ export const useAuth = () => {
     return () => unsubscribe();
   }, [user]);
 
-  const updateUserData = useCallback(async (data: Partial<UserData>) => {
+  const updateUserDataInFirestore = useCallback(async (data: Partial<UserData>) => {
     if (!user) throw new Error("No user is signed in.");
     const db = getFirestore(app);
     const userDocRef = doc(db, 'users', user.uid);
@@ -126,32 +126,40 @@ export const useAuth = () => {
     return firebaseSignout(auth);
   };
   
-  const updateUserProfileAndData = async (profile: { displayName?: string, photoURL?: string }, data?: Partial<UserData>) => {
+  const updateUserProfile = async (profile: { displayName?: string, photoURL?: string }, data?: Partial<UserData>) => {
     if (!auth.currentUser) throw new Error("No user is signed in.");
     
     // Update Firebase Auth profile
-    await updateProfile(auth.currentUser, profile);
+    if (Object.keys(profile).length > 0) {
+      await updateProfile(auth.currentUser, profile);
+    }
 
     // Update the user state in the context to reflect changes immediately
+    // This is important for immediate UI feedback
     const updatedUser = { ...auth.currentUser, ...profile } as User;
     setUser(updatedUser);
 
     // Update Firestore data
-    if (data) {
-      await updateUserData(data);
+    if (data && Object.keys(data).length > 0) {
+      await updateUserDataInFirestore(data);
     }
   }
   
-  const updateUserAvatar = async (file: File) => {
-    if (auth.currentUser) {
-      const storage = getStorage(app);
-      const storageRef = ref(storage, `avatars/${auth.currentUser.uid}/${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const photoURL = await getDownloadURL(snapshot.ref);
-      await updateUserProfileAndData({ photoURL });
-      return photoURL;
+  const updateUserAvatar = async (file: File): Promise<string> => {
+    if (!auth.currentUser) {
+       throw new Error("No user is signed in.");
     }
-    throw new Error("No user is signed in.");
+    const storage = getStorage(app);
+    const storageRef = ref(storage, `avatars/${auth.currentUser.uid}/${file.name}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    const photoURL = await getDownloadURL(snapshot.ref);
+    
+    // This will update auth profile and trigger a re-render via onAuthStateChanged
+    // which in turn re-triggers the user object in the context
+    await updateProfile(auth.currentUser, { photoURL });
+    setUser({ ...auth.currentUser, photoURL }); // Force immediate state update
+    
+    return photoURL;
   }
 
   return { 
@@ -163,8 +171,7 @@ export const useAuth = () => {
     signInWithGoogle, 
     signInWithPhone,
     signOut,
-    updateUserProfile: updateUserProfileAndData, // expose the combined function
+    updateUserProfile,
     updateUserAvatar,
-    updateUserData,
     };
 };

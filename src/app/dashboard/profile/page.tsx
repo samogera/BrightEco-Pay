@@ -49,7 +49,7 @@ export default function ProfilePage() {
       let photoURL = user.photoURL;
       if (avatarFile) {
         photoURL = await updateUserAvatar(avatarFile);
-        setAvatarFile(null);
+        setAvatarFile(null); // Clear file after upload
       }
       
       const profileUpdates: { displayName?: string, photoURL?: string } = {};
@@ -156,7 +156,7 @@ export default function ProfilePage() {
                     <Label htmlFor="phone">Phone Number</Label>
                     <div className="flex items-center gap-2">
                         <Phone className="text-muted-foreground" />
-                        <Input id="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} disabled={!user?.providerData.some(p => p.providerId === 'phone')} />
+                        <Input id="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} disabled />
                     </div>
                 </div>
                 <div className="space-y-2">

@@ -6,29 +6,69 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { LifeBuoy, Phone, MessageSquare, MapPin } from "lucide-react";
+import { LifeBuoy, Phone, MessageSquare, MapPin, Loader } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import Link from "next/link";
+import { submitTicket } from "@/ai/flows/submit-ticket";
 
 
 export default function SupportPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [subject, setSubject] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate form submission
-    setTimeout(() => {
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      phone: formData.get('phone') as string,
+      location: formData.get('location') as string,
+      subject: subject,
+      message: formData.get('message') as string,
+    }
+
+    if (!data.name || !data.email || !data.subject || !data.message) {
       toast({
-        title: "Ticket Submitted",
-        description: "Our support team will get back to you shortly.",
+        title: "Missing Fields",
+        description: "Please fill out all required fields.",
+        variant: "destructive",
       });
       setLoading(false);
-    }, 1500)
+      return;
+    }
+
+    try {
+      const result = await submitTicket(data);
+      if (result.success) {
+         toast({
+          title: "Ticket Submitted",
+          description: result.message,
+        });
+        // Reset form if needed
+        (e.target as HTMLFormElement).reset();
+        setSubject('');
+      } else {
+         toast({
+          title: "Submission Failed",
+          description: result.message || "An unknown error occurred.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+        toast({
+          title: "Submission Error",
+          description: error.message || "Failed to submit ticket. Please try again later.",
+          variant: "destructive",
+        });
+    } finally {
+        setLoading(false);
+    }
   }
 
   return (
@@ -46,26 +86,26 @@ export default function SupportPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" placeholder="Enter your name" required />
+                  <Input id="name" name="name" placeholder="Enter your name" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" placeholder="user@example.com" required />
+                  <Input id="email" name="email" type="email" placeholder="user@example.com" required />
                 </div>
               </div>
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" placeholder="+254 712 345 678" />
+                    <Input id="phone" name="phone" placeholder="+254 712 345 678" />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="location">Your Location (Optional)</Label>
-                    <Input id="location" placeholder="e.g., Nairobi" />
+                    <Input id="location" name="location" placeholder="e.g., Nairobi" />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject</Label>
-                <Select name="subject" required>
+                <Select name="subject" required value={subject} onValueChange={setSubject}>
                   <SelectTrigger id="subject">
                     <SelectValue placeholder="Select a reason..." />
                   </SelectTrigger>
@@ -81,10 +121,10 @@ export default function SupportPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="message">Message</Label>
-                <Textarea id="message" placeholder="Describe your issue or request in detail..." rows={5} required/>
+                <Textarea id="message" name="message" placeholder="Describe your issue or request in detail..." rows={5} required/>
               </div>
               <Button type="submit" disabled={loading}>
-                {loading ? 'Submitting...' : 'Submit Ticket'}
+                {loading ? <><Loader className="animate-spin mr-2" /> Submitting...</> : 'Submit Ticket'}
               </Button>
             </form>
           </CardContent>
