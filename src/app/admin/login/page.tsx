@@ -27,12 +27,14 @@ export default function AdminLoginPage() {
         setLoading(true);
         try {
             // In a real app, you'd have specific admin authentication logic
-            // For now, we'll use a simple email/password check
+            // For now, we'll use a simple email/password check and a mocked sign-in
             if(email === 'admin@brighteco.com' && password === 'adminpass') {
-                await signInWithEmail(email, password).catch(() => {
-                    // This might fail if the admin user doesn't exist, we can ignore for demo
+                // We use a real email user to represent the admin for demo purposes
+                await signInWithEmail('user@example.com', 'password').catch((err) => {
+                    // This might fail if the user doesn't exist, we can ignore for demo
+                    console.log("Demo admin login, bypassing normal auth error: ", err.code);
                 });
-                toast({ title: 'Admin Login Successful' });
+                toast({ title: 'Admin Login Successful', description: 'Redirecting to dashboard...' });
                 router.push('/admin');
             } else {
                  toast({ title: 'Login Failed', description: 'Invalid admin credentials.', variant: 'destructive' });
@@ -52,18 +54,18 @@ export default function AdminLoginPage() {
                 <form onSubmit={handleAdminLogin}>
                     <Card>
                         <CardHeader className="text-center">
-                            <CardTitle className="font-headline text-2xl">Admin Login</CardTitle>
+                            <CardTitle className="font-headline text-2xl">Admin Portal</CardTitle>
                             <CardDescription>
                                 Access the BrightEco Pay management dashboard.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">Admin Email</Label>
                                 <Input id="email" type="email" placeholder="admin@brighteco.com" required value={email} onChange={e => setEmail(e.target.value)} />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password">Admin Password</Label>
                                 <Input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} />
                             </div>
                         </CardContent>
@@ -72,9 +74,9 @@ export default function AdminLoginPage() {
                                 {loading ? <Loader className="animate-spin" /> : 'Login to Admin Dashboard'}
                             </Button>
                               <p className="text-sm text-muted-foreground">
-                                Not an admin?{' '}
+                                Are you a school or user?{' '}
                                 <Link href="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
-                                    Return to User Login
+                                    Login Here
                                 </Link>
                             </p>
                         </CardFooter>

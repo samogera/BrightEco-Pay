@@ -3,6 +3,7 @@ import {
   BatteryFull,
   Sun,
   Zap,
+  BookOpen,
 } from 'lucide-react';
 
 import {
@@ -45,24 +46,24 @@ function DeviceStatusCard({
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-       <Card className="bg-destructive/10 border-destructive/50 text-destructive-foreground">
+       <Card className="bg-destructive/10 border-destructive text-destructive-foreground">
         <CardHeader className="flex flex-row items-start gap-4 space-y-0">
             <AlertTriangle className="h-6 w-6 text-destructive" />
             <div className="flex-1">
-                <CardTitle>Grace Period Ending Soon</CardTitle>
+                <CardTitle>Grace Period Alert</CardTitle>
                 <CardDescription className="text-destructive-foreground/80">
-                    Your account is currently in its grace period. To avoid service interruption, please make a payment before the period ends in <strong>2 days</strong>.
+                    Your account is currently in a grace period. To avoid service interruption, please make a payment before the period ends in <strong>2 days</strong>.
                 </CardDescription>
             </div>
         </CardHeader>
         <CardContent>
              <Button asChild variant="destructive">
-                <Link href="/dashboard/billing">Make a Payment</Link>
+                <Link href="/dashboard/billing">Pay Now</Link>
             </Button>
         </CardContent>
       </Card>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <DeviceStatusCard
           title="Solar Panel Output"
           icon={Sun}
@@ -73,13 +74,19 @@ export default function DashboardPage() {
           title="Battery Charge"
           icon={BatteryFull}
           value="92%"
-          description="20.1 hours of backup remaining"
+          description="20.1 hours of backup"
         />
         <DeviceStatusCard
-          title="Inverter Status"
+          title="Classroom Lighting"
+          icon={BookOpen}
+          value="8 Hours"
+          description="Total lighting provided today"
+        />
+        <DeviceStatusCard
+          title="System Status"
           icon={Zap}
           value="Online"
-          description="System functioning normally"
+          description="Functioning optimally"
         />
       </div>
 
@@ -89,7 +96,7 @@ export default function DashboardPage() {
             <CardTitle className="font-headline text-xl">
               Energy Usage
             </CardTitle>
-            <CardDescription>Your consumption over the last 6 months.</CardDescription>
+            <CardDescription>Your school's consumption over the last 6 months.</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
             <EnergyUsageChart />

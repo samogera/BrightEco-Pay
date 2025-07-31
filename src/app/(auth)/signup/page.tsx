@@ -67,6 +67,10 @@ export default function SignupPage() {
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password.length < 6) {
+        toast({ title: 'Password Too Short', description: 'Password must be at least 6 characters long.', variant: 'destructive' });
+        return;
+    }
     if (password !== confirmPassword) {
         toast({ title: 'Passwords do not match', variant: 'destructive' });
         return;
@@ -74,10 +78,14 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signUpWithEmail(email, password);
-      toast({ title: 'Account Created', description: 'You can now log in.' });
-      router.push('/login');
+      toast({ title: 'Account Created', description: 'Welcome! You can now log in.' });
+      router.push('/dashboard');
     } catch (error: any) {
-      toast({ title: 'Sign-up Failed', description: error.message, variant: 'destructive' });
+      if (error.code === 'auth/email-already-in-use') {
+         toast({ title: 'Sign-up Failed', description: 'This email is already registered. Please log in instead.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Sign-up Failed', description: error.message, variant: 'destructive' });
+      }
     }
     setLoading(false);
   };
@@ -109,7 +117,7 @@ export default function SignupPage() {
   const handlePhoneSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!confirmationResult) {
-        toast({ title: 'Verification Needed', description: 'Please send a verification code first.', variant: 'destructive' });
+        toast({ title: 'Verification Needed', description: 'Please request a verification code first.', variant: 'destructive' });
         return;
     }
     setLoading(true);
@@ -129,7 +137,7 @@ export default function SignupPage() {
       <CardHeader className="text-center">
         <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
         <CardDescription>
-          Sign up to get started with clean energy.
+          Join our community for clean, reliable energy.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -171,7 +179,7 @@ export default function SignupPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="code">Verification Code</Label>
-                <Input id="code" type="text" placeholder="Enter 6-digit code" value={code} onChange={(e) => setCode(e.target.value)} disabled={loading || !confirmationResult} />
+                <Input id="code" type="text" placeholder="Enter 6-digit code" required value={code} onChange={(e) => setCode(e.target.value)} disabled={loading || !confirmationResult} />
               </div>
               <Button type="submit" className="w-full" disabled={loading || !confirmationResult}>
                  {loading ? <Loader className="animate-spin" /> : 'Create Account with Phone'}

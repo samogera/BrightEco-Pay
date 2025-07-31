@@ -6,8 +6,8 @@ import { ThemeProvider } from '@/components/shared/ThemeProvider';
 import { AuthProvider } from '@/components/shared/AuthProvider';
 
 export const metadata: Metadata = {
-  title: 'BrightEco Pay',
-  description: 'Clean energy solutions for everyone.',
+  title: 'BrightEco Pay for Schools',
+  description: 'Clean, reliable solar energy for educational institutions.',
 };
 
 export default function RootLayout({

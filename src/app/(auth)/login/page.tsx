@@ -73,7 +73,13 @@ export default function LoginPage() {
       toast({ title: 'Login Successful', description: 'Welcome back!' });
       router.push('/dashboard');
     } catch (error: any) {
-      toast({ title: 'Login Failed', description: error.message, variant: 'destructive' });
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+         toast({ title: 'Login Failed', description: 'Invalid credentials. Please check your email and password.', variant: 'destructive' });
+      } else if (error.code === 'auth/invalid-credential') {
+          toast({ title: 'Login Failed', description: 'Invalid credentials. Please check your email and password.', variant: 'destructive' });
+      } else {
+         toast({ title: 'Login Failed', description: error.message, variant: 'destructive' });
+      }
     }
     setLoading(false);
   };
@@ -162,7 +168,7 @@ export default function LoginPage() {
               </div>
                <div className="space-y-2">
                 <Label htmlFor="code">Verification Code</Label>
-                <Input id="code" type="text" placeholder="Enter 6-digit code" value={code} onChange={(e) => setCode(e.target.value)} disabled={loading || !confirmationResult} />
+                <Input id="code" type="text" placeholder="Enter 6-digit code" required value={code} onChange={(e) => setCode(e.target.value)} disabled={loading || !confirmationResult} />
               </div>
               <Button type="submit" className="w-full" disabled={loading || !confirmationResult}>
                 {loading ? <Loader className="animate-spin" /> : 'Login with Phone'}

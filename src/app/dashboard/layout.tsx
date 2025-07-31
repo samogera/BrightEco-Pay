@@ -15,6 +15,7 @@ import {
   Moon,
   Sun,
   Loader,
+  BookOpen
 } from 'lucide-react';
 import type {PropsWithChildren} from 'react';
 
@@ -52,6 +53,7 @@ const menuItems = [
   {href: '/dashboard/devices', label: 'Devices', icon: Smartphone},
   {href: '/dashboard/billing', label: 'Billing', icon: CreditCard},
   {href: '/dashboard/profile', label: 'Profile', icon: User},
+  {href: '/dashboard/education', label: 'Education', icon: BookOpen},
   {href: '/dashboard/support', label: 'Support', icon: LifeBuoy},
 ];
 
@@ -80,7 +82,7 @@ export default function DashboardLayout({children}: PropsWithChildren) {
   
   if (loading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader className="h-16 w-16 animate-spin text-primary" />
       </div>
     );
@@ -148,16 +150,17 @@ export default function DashboardLayout({children}: PropsWithChildren) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="flex items-center justify-between p-4 border-b bg-card">
+        <header className="flex items-center justify-between p-4 border-b bg-card sticky top-0 z-10">
           <SidebarTrigger>
             <PanelLeft />
           </SidebarTrigger>
           <div className="flex items-center gap-4">
-             <h1 className="font-headline text-xl font-semibold capitalize">{pathname.split('/').pop() || 'Dashboard'}</h1>
+             <h1 className="font-headline text-xl font-semibold capitalize hidden sm:block">{pathname.split('/').pop()?.replace('-', ' ') || 'Dashboard'}</h1>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                aria-label="Toggle theme"
               >
                 <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                 <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />

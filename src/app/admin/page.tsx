@@ -10,7 +10,7 @@ export default function AdminPage() {
           Admin Dashboard
         </h1>
         <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-          Welcome, Admin. Monitor business performance, analyze customer data, and generate AI-powered insights.
+          Monitor performance, analyze school data, and manage the BrightEco platform.
         </p>
       </div>
       <CustomerAnalytics />

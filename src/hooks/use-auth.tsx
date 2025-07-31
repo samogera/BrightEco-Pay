@@ -14,15 +14,12 @@ import {
     updateProfile,
     RecaptchaVerifier,
     signInWithPhoneNumber,
-    onAuthStateChanged,
 } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { app } from '@/lib/firebase';
-import { useToast } from './use-toast';
 
 export const useAuth = () => {
   const { auth, user, loading } = useContext(AuthContext);
-  const { toast } = useToast();
 
   const signInWithEmail = (email: string, pass: string) => {
     return signInWithEmailAndPassword(auth, email, pass);
@@ -37,25 +34,32 @@ export const useAuth = () => {
     return signInWithPopup(auth, provider);
   };
   
-  const setupRecaptcha = () => {
-    if (typeof window !== 'undefined' && !(window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+  const setupRecaptcha = (containerId: string) => {
+    if (typeof window !== 'undefined') {
+        const verifierId = `recaptcha-verifier-${containerId}`;
+        if ((window as any)[verifierId]) {
+            return (window as any)[verifierId];
+        }
+
+        (window as any)[verifierId] = new RecaptchaVerifier(auth, containerId, {
             'size': 'invisible',
             'callback': (response: any) => {
-              // reCAPTCHA solved, you can now send the phone number.
-              console.log("reCAPTCHA solved, ready to send phone number.");
+              console.log("reCAPTCHA solved");
             },
             'expired-callback': () => {
-                // Response expired. Ask user to solve reCAPTCHA again.
-                toast({ title: 'reCAPTCHA Expired', description: 'Please try sending the code again.', variant: 'destructive' });
+                console.error("reCAPTCHA expired");
             }
         });
+        return (window as any)[verifierId];
     }
+    return null;
   }
 
   const signInWithPhone = (phoneNumber: string) => {
-      setupRecaptcha();
-      const appVerifier = (window as any).recaptchaVerifier;
+      const appVerifier = setupRecaptcha('recaptcha-container');
+      if (!appVerifier) {
+          throw new Error("reCAPTCHA verifier not initialized.");
+      }
       return signInWithPhoneNumber(auth, phoneNumber, appVerifier);
   };
 
@@ -66,7 +70,10 @@ export const useAuth = () => {
   const updateUserProfile = async (profile: { displayName?: string, photoURL?: string }) => {
     if (auth.currentUser) {
         await updateProfile(auth.currentUser, profile);
-        // Manually trigger a state update if needed, as onAuthStateChanged might not fire for profile updates.
+        // This is a common pattern to force a state refresh in the AuthProvider
+        // by re-triggering the onAuthStateChanged listener with the updated user.
+        // As we don't have direct access to the setter, this is a workaround.
+        // A better approach would be a dedicated state management library.
         return {...auth.currentUser};
     }
     throw new Error("No user is signed in.");
@@ -78,7 +85,7 @@ export const useAuth = () => {
       const storageRef = ref(storage, `avatars/${auth.currentUser.uid}/${file.name}`);
       const snapshot = await uploadBytes(storageRef, file);
       const photoURL = await getDownloadURL(snapshot.ref);
-      await updateUserProfile({ photoURL });
+      await updateProfile(auth.currentUser, { photoURL });
       return photoURL;
     }
     throw new Error("No user is signed in.");

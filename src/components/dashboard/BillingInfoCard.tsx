@@ -14,19 +14,19 @@ import {
 export function BillingInfoCard() {
 
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle className="font-headline text-xl">
           Billing & Payments
         </CardTitle>
         <CardDescription>
-          View your current balance and make payments.
+          View your school's current balance and make termly payments.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 flex-grow flex flex-col justify-between">
         <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">Current Balance</p>
-          <p className="text-3xl font-bold">KES 2,550.00</p>
+          <p className="text-sm text-muted-foreground">Current Term Balance</p>
+          <p className="text-3xl font-bold">KES 12,550.00</p>
         </div>
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-2">
