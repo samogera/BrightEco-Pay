@@ -40,16 +40,41 @@ const submitTicketFlow = ai.defineFlow(
     outputSchema: SubmitTicketOutputSchema,
   },
   async (input) => {
-    console.log('New Support Ticket Received:');
-    console.log(`From: ${input.name} <${input.email}>`);
-    console.log(`Subject: ${input.subject}`);
-    console.log('---');
-    console.log(input.message);
-    console.log('---');
-    console.log(`Simulating sending email to robinsonoolaka@gmail.com`);
-
+    
     // In a real application, you would integrate an email service like SendGrid or Resend here.
-    // For this simulation, we'll just log it and return a success response.
+    // For this simulation, we will format the ticket as an email and log it to the console.
+    
+    const emailBody = `
+      ========================================
+      New Support Ticket from BrightEco Pay
+      ========================================
+      
+      A new support ticket has been submitted via the website.
+
+      --- User Details ---
+      Name: ${input.name}
+      Email: ${input.email}
+      Phone: ${input.phone || 'Not provided'}
+      Location: ${input.location || 'Not provided'}
+      
+      --- Ticket Details ---
+      Subject: ${input.subject}
+      
+      Message:
+      ${input.message}
+      
+      ========================================
+    `;
+
+    console.log('--- SIMULATING EMAIL ---');
+    console.log('To: robinsonoolakak@gmail.com');
+    console.log('From: support@brighteco-pay.com');
+    console.log('Subject: New Support Ticket: ' + input.subject);
+    console.log('Body:');
+    console.log(emailBody);
+    console.log('--- END OF SIMULATION ---');
+
+    // Simulate API call delay for sending the email
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     return {
