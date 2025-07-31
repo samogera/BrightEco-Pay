@@ -4,48 +4,56 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, Users, Home, Zap, RefreshCcw } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import Link from 'next/link';
 
 // Constants for calculation
-const PANEL_SIZE_SQM = 2; // Each panel takes up 2 square meters
-const KES_PER_KWH_SAVED = 5; // Estimated savings per kWh in KES
-const KG_CO2_PER_KWH = 0.5; // Estimated CO2 reduction per kWh
+const KES_PER_KWH = 25; // Average cost of grid electricity in KES per kWh
+const SOLAR_GENERATION_PER_SQM_PER_DAY = 0.5; // Estimated kWh generated per sq meter of panel per day
+const KG_CO2_PER_KWH = 0.5; // Estimated CO2 reduction per kWh from grid
 
 const initialValues = {
-  householdSize: 4,
-  dailyUsage: 5,
+  monthlyBill: 2000,
   roofSpace: 20,
 };
 
 export function SolarSavingsCalculator() {
-  const [householdSize, setHouseholdSize] = useState(initialValues.householdSize);
-  const [dailyUsage, setDailyUsage] = useState(initialValues.dailyUsage);
+  const [monthlyBill, setMonthlyBill] = useState(initialValues.monthlyBill);
   const [roofSpace, setRoofSpace] = useState(initialValues.roofSpace);
   const [showResults, setShowResults] = useState(false);
 
   const results = useMemo(() => {
-    const numberOfPanels = Math.floor(roofSpace / PANEL_SIZE_SQM);
-    const monthlySavings = dailyUsage * 30 * KES_PER_KWH_SAVED;
-    const carbonReduction = dailyUsage * 365 * KG_CO2_PER_KWH;
+    // Estimate daily usage from bill
+    const dailyUsageKWh = monthlyBill / KES_PER_KWH / 30;
+    
+    // Calculate what the solar panels can generate
+    const dailySolarGeneration = roofSpace * SOLAR_GENERATION_PER_SQM_PER_DAY;
+    
+    // The effective solar usage is the lesser of what's needed vs what's generated
+    const effectiveDailyKWh = Math.min(dailyUsageKWh, dailySolarGeneration);
+
+    const yearlySavings = effectiveDailyKWh * 30 * 12 * KES_PER_KWH;
+    const carbonReduction = effectiveDailyKWh * 365 * KG_CO2_PER_KWH;
+    const numberOfPanels = Math.ceil(dailySolarGeneration / 2); // Assuming 2kWh/day/panel
 
     return {
       panels: numberOfPanels,
-      savings: monthlySavings,
+      savings: yearlySavings,
       co2: carbonReduction,
     };
-  }, [dailyUsage, roofSpace]);
+  }, [monthlyBill, roofSpace]);
 
   const handleCalculate = () => {
-    setShowResults(true);
+    if(monthlyBill > 0 && roofSpace > 0) {
+      setShowResults(true);
+    }
   };
   
   const handleReset = () => {
-    setHouseholdSize(initialValues.householdSize);
-    setDailyUsage(initialValues.dailyUsage);
+    setMonthlyBill(initialValues.monthlyBill);
     setRoofSpace(initialValues.roofSpace);
     setShowResults(false);
   }
@@ -57,7 +65,7 @@ export function SolarSavingsCalculator() {
                 Estimate Your Savings
             </h2>
             <p className="max-w-2xl mx-auto text-lg text-muted-foreground mt-4">
-               See how much you can save with BrightEco Pay solar. Adjust the sliders to match your home's profile.
+               See how much you can save with BrightEco Pay solar. Enter your details to get an instant estimate.
             </p>
         </div>
 
@@ -65,25 +73,24 @@ export function SolarSavingsCalculator() {
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
                 <div className="space-y-6">
                     <div>
-                        <Label htmlFor="household" className="flex justify-between text-base">
-                            <span><Users className="inline-block mr-2" />Household Size</span>
-                            <span className="font-bold text-primary">{householdSize} people</span>
+                        <Label htmlFor="bill" className="text-base font-medium">
+                            <Zap className="inline-block mr-2 text-primary" />
+                            What's your current monthly electricity bill?
                         </Label>
-                        <Slider id="household" value={[householdSize]} onValueChange={([v]) => setHouseholdSize(v)} max={10} min={1} step={1} className="mt-2" />
+                        <div className="flex items-center gap-2 mt-2">
+                           <span className="text-lg font-semibold text-muted-foreground">KES</span>
+                           <Input id="bill" type="number" value={monthlyBill} onChange={(e) => setMonthlyBill(Number(e.target.value))} className="text-lg font-bold" />
+                        </div>
                     </div>
                      <div>
-                        <Label htmlFor="usage" className="flex justify-between text-base">
-                             <span><Zap className="inline-block mr-2" />Average Daily Usage</span>
-                            <span className="font-bold text-primary">{dailyUsage} kWh</span>
+                        <Label htmlFor="roof" className="text-base font-medium">
+                           <Home className="inline-block mr-2 text-primary" />
+                           How much roof space do you have?
                         </Label>
-                        <Slider id="usage" value={[dailyUsage]} onValueChange={([v]) => setDailyUsage(v)} max={20} min={1} step={1} className="mt-2" />
-                    </div>
-                     <div>
-                        <Label htmlFor="roof" className="flex justify-between text-base">
-                           <span><Home className="inline-block mr-2" />Available Roof Space</span>
-                           <span className="font-bold text-primary">{roofSpace} m²</span>
-                        </Label>
-                        <Slider id="roof" value={[roofSpace]} onValueChange={([v]) => setRoofSpace(v)} max={50} min={10} step={1} className="mt-2" />
+                        <div className="flex items-center gap-2 mt-2">
+                           <Input id="roof" type="number" value={roofSpace} onChange={(e) => setRoofSpace(Number(e.target.value))} className="text-lg font-bold" />
+                           <span className="text-lg font-semibold text-muted-foreground">m²</span>
+                        </div>
                     </div>
                     <div className="flex gap-4 !mt-8">
                          <Button onClick={handleCalculate} size="lg" className="w-full">
@@ -96,29 +103,27 @@ export function SolarSavingsCalculator() {
                 </div>
 
                 <div className="text-center rounded-2xl bg-primary/5 p-8 border-2 border-dashed border-primary/30">
-                    <h3 className="font-headline text-2xl mb-4">Your Estimated Results</h3>
+                    <h3 className="font-headline text-2xl mb-4">Your Estimated Yearly Savings</h3>
                     {showResults ? (
                         <div className="space-y-4">
-                            <div>
-                                <p className="text-muted-foreground font-semibold">Number of Solar Panels</p>
-                                <p className="text-3xl font-bold text-primary">{results.panels}</p>
-                            </div>
-                            <Separator />
-                            <div>
-                                <p className="text-muted-foreground font-semibold">Potential Monthly Savings</p>
-                                <p className="text-3xl font-bold text-primary">KES {results.savings.toLocaleString()}</p>
-                            </div>
-                            <Separator />
-                            <div>
-                                <p className="text-muted-foreground font-semibold">Annual Carbon Reduction</p>
-                                <p className="text-3xl font-bold text-primary">{results.co2.toFixed(0)} kg CO₂</p>
+                           <p className="text-5xl font-bold text-primary">KES {results.savings.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
+                            <Separator className="my-4" />
+                            <div className="grid grid-cols-2 gap-4 text-left">
+                                <div>
+                                    <p className="text-muted-foreground font-semibold">Recommended Panels</p>
+                                    <p className="text-xl font-bold text-foreground">{results.panels}</p>
+                                </div>
+                                 <div>
+                                    <p className="text-muted-foreground font-semibold">CO₂ Reduction / Year</p>
+                                    <p className="text-xl font-bold text-foreground">{results.co2.toFixed(0)} kg</p>
+                                </div>
                             </div>
                              <p className="text-xs text-muted-foreground pt-4">
                                 Estimates are approximate. <Link href="/dashboard/support" className="underline text-primary">Contact us</Link> for a detailed quote.
                             </p>
                         </div>
                     ) : (
-                         <p className="text-muted-foreground py-12">Click "Calculate Savings" to see your potential results.</p>
+                         <p className="text-muted-foreground py-12">Enter your details and click "Calculate" to see your potential results.</p>
                     )}
                 </div>
             </div>

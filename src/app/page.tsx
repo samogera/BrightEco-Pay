@@ -51,7 +51,7 @@ function WhatsAppIcon(props: React.SVGProps<SVGSVGElement>) {
           <path d="M19.09 10.32c.18.33.32.68.42 1.05" />
           <path d="M7.64 12c-.14-.3-.24-.63-.31-.98" />
           <path d="M11.4 8.62c-.33-.1-.64-.24-.94-.4" />
-          <path d="M4.91 10.32c-.18-.33-.32-.68-.42-1.05" />
+          <path d="M4.91 10.32c-.18-.33-.32.68-.42-1.05" />
         </svg>
     )
 }
@@ -90,11 +90,6 @@ export default function Home() {
           </div>
         </section>
         
-        <section className="py-16 md:py-24">
-            <SolarSavingsCalculator />
-        </section>
-
-
         <section id="features" className="py-16 md:py-24 bg-muted/30">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
                  <h2 className="font-headline text-3xl md:text-4xl font-bold mb-2 text-accent-foreground/90">
@@ -150,8 +145,12 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <section className="py-16 md:py-24 bg-muted/30">
+            <SolarSavingsCalculator />
+        </section>
         
-         <section className="py-16 md:py-24 bg-muted/30">
+         <section className="py-16 md:py-24 bg-background">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
                  <h2 className="font-headline text-3xl md:text-4xl font-bold text-accent-foreground/90 mb-4">
                     Start Your Solar Journey Today
@@ -191,7 +190,7 @@ export default function Home() {
                <div className="space-y-2">
                   <h4 className="font-headline font-semibold">Contact Us</h4>
                   <ul className="space-y-1 text-muted-foreground">
-                      <li><a href="https://wa.me/254746610345" target="_blank" className="hover:text-primary flex items-center gap-2"><WhatsAppIcon className="h-4 w-4" /> WhatsApp</a></li>
+                      <li><a href="https://wa.me/254746610345" target="_blank" className="hover:text-primary flex items-center gap-2 transition-colors"><WhatsAppIcon className="h-4 w-4" /> WhatsApp</a></li>
                       <li><p>123 Solar Avenue, Nairobi, Kenya</p></li>
                   </ul>
               </div>
