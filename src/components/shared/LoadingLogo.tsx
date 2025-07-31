@@ -8,7 +8,7 @@ interface LoadingLogoProps {
 
 export function LoadingLogo({ className }: LoadingLogoProps) {
   return (
-    <div className={cn("animate-zoom-in-out", className)}>
+    <div className={cn("flex items-center justify-center animate-zoom-in-out", className)}>
         <Logo />
     </div>
   );
